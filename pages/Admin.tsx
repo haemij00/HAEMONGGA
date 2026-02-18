@@ -75,7 +75,6 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
     alert('저장되었습니다.');
   };
 
-  // Helper for rendering spacing selector
   const SpacingSelector = (block: ContentBlock, idx: number) => (
     <div className="flex flex-col gap-1">
       <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest">Vertical Spacing</label>
@@ -83,9 +82,10 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
         className="bg-black border border-white/10 p-2 text-[10px] text-white outline-none" 
         value={block.settings?.verticalSpacing || 'py-24'} 
         onChange={e => {
-          const bs = [...editingProject!.blocks];
+          if (!editingProject) return;
+          const bs = [...editingProject.blocks];
           bs[idx].settings = { ...bs[idx].settings, verticalSpacing: e.target.value as any };
-          setEditingProject({ ...editingProject!, blocks: bs });
+          setEditingProject({ ...editingProject, blocks: bs });
         }}
       >
         <option value="py-0">None (0)</option>
@@ -103,13 +103,13 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
       <div className="fixed inset-0 z-[110] bg-[#0E0E0E] overflow-y-auto pt-20 font-sans">
         <div className="sticky top-0 z-[120] bg-black/90 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <span className="text-[10px] tracking-widest text-purple-400 font-bold uppercase">Builder Mode</span>
+            <span className="text-[10px] tracking-widest text-purple-400 font-bold uppercase">Project Builder</span>
             <span className="text-white/20">|</span>
-            <h2 className="text-sm font-bold truncate max-w-[200px]">{editingProject.title || 'Untitled'}</h2>
+            <h2 className="text-sm font-bold truncate max-w-[200px]">{editingProject.title || 'Untitled Project'}</h2>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => setEditingProject(null)} className="text-[10px] text-white/40 font-bold uppercase px-4">Close</button>
-            <button onClick={handleSaveProject} className="bg-purple-600 text-white px-8 py-2 text-[10px] font-bold uppercase rounded-sm">Save Changes</button>
+            <button onClick={() => setEditingProject(null)} className="text-[10px] text-white/40 font-bold uppercase px-4 hover:text-white transition-colors">Close</button>
+            <button onClick={handleSaveProject} className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-2 text-[10px] font-bold uppercase rounded-sm transition-all shadow-lg">Save Changes</button>
           </div>
         </div>
 
@@ -125,13 +125,13 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   <textarea className="w-full bg-black border border-white/10 p-3 text-sm italic outline-none focus:border-purple-500" rows={2} value={editingProject.shortDesc} onChange={e => setEditingProject({...editingProject, shortDesc: e.target.value})} />
                 </div>
                 <div>
-                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">Main Thumbnail (Image/Video)</label>
+                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">Thumbnail Asset</label>
                   <div className="aspect-video bg-black relative group flex items-center justify-center border border-white/10">
                     {editingProject.thumbnailUrl ? (
                       isVideo(editingProject.thumbnailUrl) ? <video src={editingProject.thumbnailUrl} className="max-h-full" autoPlay muted loop /> : <img src={editingProject.thumbnailUrl} className="max-h-full" />
-                    ) : <span className="text-[10px] text-white/20 uppercase tracking-widest">No Thumbnail</span>}
+                    ) : <span className="text-[10px] text-white/20 uppercase tracking-widest">Empty</span>}
                     <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
-                      UPLOAD THUMBNAIL
+                      UPLOAD IMAGE/VIDEO
                       <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
                         const f = e.target.files?.[0]; if(!f) return;
                         const b64 = await fileToBase64(f);
@@ -155,20 +155,20 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   <input className="w-full bg-black border border-white/10 p-2 text-xs" value={editingProject.role} onChange={e => setEditingProject({...editingProject, role: e.target.value})} />
                 </div>
                 <div>
-                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">Tools (Comma separated)</label>
+                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">Tools (comma separated)</label>
                   <input className="w-full bg-black border border-white/10 p-2 text-xs" value={editingProject.tools.join(', ')} onChange={e => setEditingProject({...editingProject, tools: e.target.value.split(',').map(s => s.trim())})} />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">Slug (URL ID)</label>
-                  <input className="w-full bg-black border border-white/10 p-2 text-xs" value={editingProject.slug} placeholder="e.g. project-name" onChange={e => setEditingProject({...editingProject, slug: e.target.value})} />
+                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">URL Slug</label>
+                  <input className="w-full bg-black border border-white/10 p-2 text-xs" value={editingProject.slug} placeholder="e.g. project-one" onChange={e => setEditingProject({...editingProject, slug: e.target.value})} />
                 </div>
              </div>
           </section>
 
           <div className="flex flex-wrap gap-2 p-4 bg-white/5 border border-white/10 mb-10 sticky top-16 z-10 backdrop-blur-md">
-            <span className="text-[9px] text-white/40 uppercase font-bold w-full mb-2">Add New Section:</span>
+            <span className="text-[9px] text-white/40 uppercase font-bold w-full mb-2">Append Section:</span>
             {(['text', 'large-image', 'video', 'concept', 'grid-gallery', 'storyboard', 'gallery', 'process'] as BlockType[]).map(t => (
-              <button key={t} onClick={() => addBlock(t)} className="px-4 py-2 bg-purple-900/20 border border-purple-500/30 text-[9px] font-bold uppercase hover:bg-purple-600 transition-colors font-sans">{t}</button>
+              <button key={t} onClick={() => addBlock(t)} className="px-4 py-2 bg-purple-900/20 border border-purple-500/30 text-[9px] font-bold uppercase hover:bg-purple-600 transition-colors">{t}</button>
             ))}
           </div>
 
@@ -182,17 +182,16 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                 </div>
 
                 <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                  <span className="text-[10px] text-purple-400 font-bold uppercase tracking-[0.3em]">Section: {block.type}</span>
+                  <span className="text-[10px] text-purple-400 font-bold uppercase tracking-[0.3em]">{block.type} section</span>
                   {SpacingSelector(block, idx)}
                 </div>
 
-                {/* TEXT BLOCK */}
                 {block.type === 'text' && (
                   <div className="space-y-6">
-                    <textarea className="w-full bg-black border border-white/10 p-4 text-white outline-none min-h-[150px] font-light font-sans" value={block.data} onChange={e => {
+                    <textarea className="w-full bg-black border border-white/10 p-4 text-white outline-none min-h-[150px] font-light" value={block.data} onChange={e => {
                       const bs = [...editingProject.blocks]; bs[idx].data = e.target.value;
                       setEditingProject({...editingProject, blocks: bs});
-                    }} placeholder="Write your thoughts here..." />
+                    }} />
                     <div className="grid grid-cols-2 gap-4">
                        <select className="bg-black border border-white/10 p-2 text-xs" value={block.settings?.fontSize} onChange={e => {
                          const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, fontSize: e.target.value as any};
@@ -215,15 +214,14 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   </div>
                 )}
 
-                {/* LARGE IMAGE BLOCK */}
                 {block.type === 'large-image' && (
                   <div className="space-y-4">
                     <div className="aspect-video bg-black relative group/file flex items-center justify-center border border-white/10">
                       {block.data ? (
-                        isVideo(block.data) ? <video src={block.data} className="max-h-full object-contain" autoPlay muted loop /> : <img src={block.data} className="max-h-full object-contain" />
-                      ) : <span className="text-[10px] text-white/20 uppercase tracking-widest font-sans">No Media Uploaded</span>}
-                      <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/file:opacity-100 cursor-pointer text-[10px] font-bold tracking-widest transition-opacity font-sans">
-                        UPLOAD FILE
+                        isVideo(block.data) ? <video src={block.data} className="max-h-full" autoPlay muted loop /> : <img src={block.data} className="max-h-full" />
+                      ) : <span className="text-[10px] text-white/20 uppercase tracking-widest">Asset Missing</span>}
+                      <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/file:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
+                        UPLOAD ASSET
                         <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
                           const f = e.target.files?.[0]; if(!f) return;
                           const b64 = await fileToBase64(f);
@@ -236,56 +234,42 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                       const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, width: e.target.value as any};
                       setEditingProject({...editingProject, blocks: bs});
                     }}>
-                      <option value="w-1/2">Half Width</option>
-                      <option value="w-3/4">3/4 Width</option>
-                      <option value="w-full">Full Width</option>
+                      <option value="w-1/2">50% Width</option>
+                      <option value="w-3/4">75% Width</option>
+                      <option value="w-full">100% Width</option>
                     </select>
                   </div>
                 )}
 
-                {/* VIDEO BLOCK (IFRAME) */}
                 {block.type === 'video' && (
                   <div>
-                    <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Iframe Embed Code (Vimeo/Youtube)</label>
-                    <textarea className="w-full bg-black border border-white/10 p-3 text-xs font-mono outline-none" rows={4} value={block.data} onChange={e => {
+                    <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Embed Iframe (YouTube/Vimeo)</label>
+                    <textarea className="w-full bg-black border border-white/10 p-3 text-xs font-mono outline-none h-24" value={block.data} onChange={e => {
                        const bs = [...editingProject.blocks]; bs[idx].data = e.target.value;
                        setEditingProject({...editingProject, blocks: bs});
                     }} />
                   </div>
                 )}
 
-                {/* CONCEPT BLOCK */}
                 {block.type === 'concept' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <div>
-                        <label className="text-[9px] text-white/30 uppercase font-bold mb-1 block">Background</label>
-                        <textarea className="w-full bg-black border border-white/10 p-2 text-xs" value={block.data.background} onChange={e => {
-                          const bs = [...editingProject.blocks]; bs[idx].data.background = e.target.value;
-                          setEditingProject({...editingProject, blocks: bs});
-                        }} />
-                      </div>
-                      <div>
-                        <label className="text-[9px] text-white/30 uppercase font-bold mb-1 block">Visual Strategy</label>
-                        <textarea className="w-full bg-black border border-white/10 p-2 text-xs" value={block.data.visualStrategy} onChange={e => {
-                          const bs = [...editingProject.blocks]; bs[idx].data.visualStrategy = e.target.value;
-                          setEditingProject({...editingProject, blocks: bs});
-                        }} />
-                      </div>
-                      <div>
-                        <label className="text-[9px] text-white/30 uppercase font-bold mb-1 block">Message</label>
-                        <textarea className="w-full bg-black border border-white/10 p-2 text-xs" value={block.data.message} onChange={e => {
-                          const bs = [...editingProject.blocks]; bs[idx].data.message = e.target.value;
-                          setEditingProject({...editingProject, blocks: bs});
-                        }} />
-                      </div>
+                      {['background', 'visualStrategy', 'message'].map((f) => (
+                        <div key={f}>
+                          <label className="text-[9px] text-white/30 uppercase font-bold mb-1 block">{f}</label>
+                          <textarea className="w-full bg-black border border-white/10 p-2 text-xs h-20" value={block.data[f]} onChange={e => {
+                            const bs = [...editingProject.blocks]; bs[idx].data[f] = e.target.value;
+                            setEditingProject({...editingProject, blocks: bs});
+                          }} />
+                        </div>
+                      ))}
                     </div>
                     <div className="aspect-[4/5] bg-black relative group/file flex items-center justify-center border border-white/10">
                       {block.data.imageUrl ? (
                         isVideo(block.data.imageUrl) ? <video src={block.data.imageUrl} className="max-h-full" autoPlay muted loop /> : <img src={block.data.imageUrl} className="max-h-full" />
-                      ) : <span className="text-[10px] text-white/20 uppercase tracking-widest">No Key Visual</span>}
+                      ) : <span className="text-[10px] text-white/20 uppercase tracking-widest">Key Visual</span>}
                       <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/file:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
-                        UPLOAD IMAGE/VIDEO
+                        CHANGE VISUAL
                         <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
                           const f = e.target.files?.[0]; if(!f) return;
                           const b64 = await fileToBase64(f);
@@ -297,11 +281,10 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   </div>
                 )}
 
-                {/* MULTI IMAGE BLOCKS (GRID GALLERY, STORYBOARD, GALLERY) */}
                 {(block.type === 'grid-gallery' || block.type === 'storyboard' || block.type === 'gallery') && (
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
-                      <label className="text-[9px] text-white/30 uppercase font-bold">Image/Video List ({block.data.length})</label>
+                      <label className="text-[9px] text-white/30 uppercase font-bold">Items ({block.data.length})</label>
                       <div className="flex gap-4">
                         {block.type === 'grid-gallery' && (
                           <select className="bg-black border border-white/10 p-2 text-[9px] text-white outline-none uppercase font-bold" value={block.settings?.columns} onChange={e => {
@@ -339,22 +322,19 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   </div>
                 )}
 
-                {/* PROCESS BLOCK */}
                 {block.type === 'process' && (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center mb-4">
-                       <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest">Process Steps</label>
+                       <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest">Process Milestones</label>
                        <button onClick={() => {
                          const bs = [...editingProject.blocks]; bs[idx].data.push({ label: '', imageUrl: '' });
                          setEditingProject({...editingProject, blocks: bs});
-                       }} className="bg-purple-900/40 text-[9px] font-bold px-4 py-2 border border-purple-500/30">+ ADD STEP</button>
+                       }} className="bg-purple-900/40 text-[9px] font-bold px-4 py-2 border border-purple-500/30">+ NEW STEP</button>
                     </div>
                     {block.data.map((item: any, pidx: number) => (
                       <div key={pidx} className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/40 p-4 border border-white/5">
                          <div className="aspect-video bg-black relative group/process flex items-center justify-center border border-white/10">
-                            {item.imageUrl ? (
-                              isVideo(item.imageUrl) ? <video src={item.imageUrl} className="max-h-full" /> : <img src={item.imageUrl} className="max-h-full" />
-                            ) : <span className="text-[10px] text-white/10 uppercase">Asset</span>}
+                            {item.imageUrl ? (isVideo(item.imageUrl) ? <video src={item.imageUrl} className="max-h-full" /> : <img src={item.imageUrl} className="max-h-full" />) : <span className="text-[10px] text-white/10">Asset</span>}
                             <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/process:opacity-100 cursor-pointer text-[8px] font-bold transition-opacity">
                               UPLOAD
                               <input type="file" className="hidden" onChange={async e => {
@@ -366,14 +346,14 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                             </label>
                          </div>
                          <div className="md:col-span-2 flex flex-col justify-between">
-                            <input className="w-full bg-black border border-white/10 p-2 text-xs" value={item.label} placeholder="Label (e.g. Sculpting, Lighting Test)" onChange={e => {
+                            <input className="w-full bg-black border border-white/10 p-2 text-xs" value={item.label} placeholder="e.g. Character Sculpting" onChange={e => {
                                const bs = [...editingProject.blocks]; bs[idx].data[pidx].label = e.target.value;
                                setEditingProject({...editingProject, blocks: bs});
                             }} />
                             <button onClick={() => {
                                const bs = [...editingProject.blocks]; bs[idx].data.splice(pidx, 1);
                                setEditingProject({...editingProject, blocks: bs});
-                            }} className="self-end text-red-500/50 hover:text-red-500 text-[10px] font-bold uppercase mt-2">Remove Step</button>
+                            }} className="self-end text-red-500/50 hover:text-red-500 text-[10px] font-bold uppercase mt-2">Delete Milestone</button>
                          </div>
                       </div>
                     ))}
@@ -393,19 +373,19 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
       <div className="flex items-center justify-between mb-20">
         <h1 className="text-3xl font-bold uppercase tracking-tighter">Admin Portal</h1>
         <div className="flex gap-2 bg-white/5 p-1 rounded-sm">
-          <button onClick={() => setActiveTab('projects')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all font-sans ${activeTab === 'projects' ? 'bg-purple-600' : ''}`}>Projects</button>
-          <button onClick={() => setActiveTab('profile')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all font-sans ${activeTab === 'profile' ? 'bg-purple-600' : ''}`}>Profile & Contact</button>
+          <button onClick={() => setActiveTab('projects')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${activeTab === 'projects' ? 'bg-purple-600' : ''}`}>Works</button>
+          <button onClick={() => setActiveTab('profile')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${activeTab === 'profile' ? 'bg-purple-600' : ''}`}>Profile & Bio</button>
         </div>
       </div>
 
       {activeTab === 'projects' && (
         <div className="space-y-6">
           <div className="flex justify-end mb-10">
-            <button onClick={() => setEditingProject({ id: Date.now().toString(), title: '', slug: '', category: 'Surreal', shortDesc: '', duration: '', role: '', tools: [], year: '2025', thumbnailUrl: '', blocks: [] })} className="bg-white text-black px-8 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all font-sans">New Project</button>
+            <button onClick={() => setEditingProject({ id: Date.now().toString(), title: '', slug: '', category: 'Surreal', shortDesc: '', duration: '', role: '', tools: [], year: '2025', thumbnailUrl: '', blocks: [] })} className="bg-white text-black px-8 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all">Create New Project</button>
           </div>
           <div className="grid grid-cols-1 gap-4">
             {projects.map((p, index) => (
-              <div key={p.id} className="bg-[#1A1A1A] p-6 flex justify-between items-center border border-white/10 group hover:border-purple-500/50 transition-all font-sans">
+              <div key={p.id} className="bg-[#1A1A1A] p-6 flex justify-between items-center border border-white/10 group hover:border-purple-500/50 transition-all">
                 <div className="flex items-center gap-6">
                    <div className="flex flex-col gap-1 mr-4 border-r border-white/5 pr-4">
                      <button disabled={index === 0} onClick={() => {
@@ -415,14 +395,14 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                        const newP = [...projects]; [newP[index], newP[index+1]] = [newP[index+1], newP[index]]; setProjects(newP);
                      }} className="p-1 hover:text-purple-400 disabled:opacity-20 transition-colors">↓</button>
                    </div>
-                   <div className="w-20 aspect-video bg-black overflow-hidden">
+                   <div className="w-20 aspect-video bg-black overflow-hidden border border-white/5">
                      {isVideo(p.thumbnailUrl) ? <video src={p.thumbnailUrl} className="w-full h-full object-cover opacity-50" /> : <img src={p.thumbnailUrl} className="w-full h-full object-cover opacity-50" />}
                    </div>
                    <h3 className="text-xl font-bold font-serif">{p.title || 'Untitled'}</h3>
                 </div>
                 <div className="flex gap-6">
                   <button onClick={() => setEditingProject(p)} className="text-[10px] font-bold uppercase text-purple-400 hover:text-purple-300">Edit</button>
-                  <button onClick={() => { if(confirm('Delete?')) setProjects(prev => prev.filter(x => x.id !== p.id)); }} className="text-[10px] font-bold uppercase text-red-500/50 hover:text-red-500">Delete</button>
+                  <button onClick={() => { if(confirm('Delete Project?')) setProjects(prev => prev.filter(x => x.id !== p.id)); }} className="text-[10px] font-bold uppercase text-red-500/50 hover:text-red-500">Delete</button>
                 </div>
               </div>
             ))}
@@ -432,10 +412,8 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
 
       {activeTab === 'profile' && (
         <div className="space-y-12 animate-in fade-in duration-700">
-          
-          {/* Identity & Bio */}
           <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Identity & Bio</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Personal Identity</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div>
@@ -447,7 +425,7 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.alias} onChange={e => setProfile({...profile, alias: e.target.value})} />
                 </div>
                 <div>
-                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Role Title</label>
+                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Professional Role</label>
                   <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.role} onChange={e => setProfile({...profile, role: e.target.value})} />
                 </div>
               </div>
@@ -458,12 +436,11 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
             </div>
           </section>
 
-          {/* Contact & Links */}
           <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Contact & Links</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Contact Channels</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Email Address</label>
+                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Contact Email</label>
                 <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500 text-xs" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
               </div>
               <div>
@@ -477,52 +454,49 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
             </div>
           </section>
 
-          {/* Skills Management */}
           <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Expertise (Skills)</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Expertise (Comma separated)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">3D & Simulation (Comma Separated)</label>
+                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">3D & Simulation Stack</label>
                 <textarea className="w-full bg-black border border-white/10 p-3 text-white outline-none text-xs" value={profile.skills.threeD.join(', ')} onChange={e => setProfile({...profile, skills: {...profile.skills, threeD: e.target.value.split(',').map(s => s.trim())}})} />
               </div>
               <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">2D & Editing (Comma Separated)</label>
+                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">2D & Post Stack</label>
                 <textarea className="w-full bg-black border border-white/10 p-3 text-white outline-none text-xs" value={profile.skills.twoD.join(', ')} onChange={e => setProfile({...profile, skills: {...profile.skills, twoD: e.target.value.split(',').map(s => s.trim())}})} />
               </div>
             </div>
           </section>
 
-          {/* Experience & Education */}
           <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">History (Experience & Education)</h2>
-            
-            <div className="space-y-8">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Timeline (Experience & Education)</h2>
+            <div className="space-y-10">
               <div>
-                <h3 className="text-[10px] text-white/30 uppercase font-bold tracking-[0.3em] mb-4">Experience & Awards</h3>
+                <h3 className="text-[10px] text-white/30 uppercase font-bold tracking-widest mb-4">Milestones & Exhibitions</h3>
                 {profile.experience.map((exp, idx) => (
-                  <div key={idx} className="flex gap-4 mb-4">
+                  <div key={idx} className="flex gap-4 mb-3">
                     <input className="w-20 bg-black border border-white/10 p-2 text-xs" value={exp.year} placeholder="Year" onChange={e => {
                       const exps = [...profile.experience]; exps[idx].year = e.target.value; setProfile({...profile, experience: exps});
                     }} />
-                    <input className="flex-grow bg-black border border-white/10 p-2 text-xs" value={exp.title} placeholder="Title / Exhibition" onChange={e => {
+                    <input className="flex-grow bg-black border border-white/10 p-2 text-xs" value={exp.title} placeholder="Title" onChange={e => {
                       const exps = [...profile.experience]; exps[idx].title = e.target.value; setProfile({...profile, experience: exps});
                     }} />
                     <button onClick={() => {
                       const exps = [...profile.experience]; exps.splice(idx, 1); setProfile({...profile, experience: exps});
-                    }} className="text-red-500/50 hover:text-red-500 px-2">✕</button>
+                    }} className="text-red-500/50 hover:text-red-500 px-2 font-bold uppercase text-[9px]">Remove</button>
                   </div>
                 ))}
-                <button onClick={() => setProfile({...profile, experience: [...profile.experience, {year: '', title: ''}]})} className="text-[9px] font-bold text-purple-400 uppercase">+ Add Experience</button>
+                <button onClick={() => setProfile({...profile, experience: [...profile.experience, {year: '', title: ''}]})} className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mt-2 hover:text-white transition-colors">+ Add Milestone</button>
               </div>
 
               <div>
-                <h3 className="text-[10px] text-white/30 uppercase font-bold tracking-[0.3em] mb-4">Education</h3>
+                <h3 className="text-[10px] text-white/30 uppercase font-bold tracking-widest mb-4">Education</h3>
                 {profile.education?.map((edu, idx) => (
-                  <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-black/20 p-4 border border-white/5">
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3 bg-black/20 p-4 border border-white/5">
                     <input className="bg-black border border-white/10 p-2 text-xs" value={edu.period} placeholder="Period" onChange={e => {
                       const edus = [...profile.education]; edus[idx].period = e.target.value; setProfile({...profile, education: edus});
                     }} />
-                    <input className="bg-black border border-white/10 p-2 text-xs" value={edu.school} placeholder="School" onChange={e => {
+                    <input className="bg-black border border-white/10 p-2 text-xs" value={edu.school} placeholder="Institution" onChange={e => {
                       const edus = [...profile.education]; edus[idx].school = e.target.value; setProfile({...profile, education: edus});
                     }} />
                     <div className="flex gap-2">
@@ -531,35 +505,34 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                       }} />
                       <button onClick={() => {
                         const edus = [...profile.education]; edus.splice(idx, 1); setProfile({...profile, education: edus});
-                      }} className="text-red-500/50 hover:text-red-500 px-2">✕</button>
+                      }} className="text-red-500/50 hover:text-red-500 px-2 font-bold uppercase text-[9px]">Remove</button>
                     </div>
                   </div>
                 ))}
-                <button onClick={() => setProfile({...profile, education: [...profile.education, {period: '', school: '', major: ''}]})} className="text-[9px] font-bold text-purple-400 uppercase">+ Add Education</button>
+                <button onClick={() => setProfile({...profile, education: [...profile.education, {period: '', school: '', major: ''}]})} className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mt-2 hover:text-white transition-colors">+ Add Education</button>
               </div>
             </div>
           </section>
 
-          {/* Media & Resume */}
           <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Media Assets & Documents</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Imagery & Documents</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
               <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Hero Image (Home)</label>
+                <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Hero Backdrop (Landing)</label>
                 <div className="aspect-video bg-black relative group overflow-hidden border border-white/10">
                   <img src={profile.heroImageUrl} className="w-full h-full object-cover opacity-60" />
                   <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
-                    UPLOAD HERO
+                    REPLACE HERO
                     <input type="file" className="hidden" accept="image/*" onChange={e => handleProfileImageUpload(e, 'heroImageUrl')} />
                   </label>
                 </div>
               </div>
               <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Profile Photo (About)</label>
+                <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Artist Profile Picture</label>
                 <div className="aspect-[4/5] max-w-[240px] bg-black relative group overflow-hidden border border-white/10 mx-auto">
                   <img src={profile.profileImageUrl} className="w-full h-full object-cover opacity-60" />
                   <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
-                    UPLOAD PHOTO
+                    REPLACE PHOTO
                     <input type="file" className="hidden" accept="image/*" onChange={e => handleProfileImageUpload(e, 'profileImageUrl')} />
                   </label>
                 </div>
@@ -567,10 +540,10 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
             </div>
             
             <div className="pt-6 border-t border-white/5">
-              <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Portfolio Resume (PDF)</label>
+              <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Professional CV (PDF)</label>
               <div className="flex items-center gap-6">
-                <div className="flex-grow p-4 bg-black/40 border border-dashed border-white/10 rounded-sm text-xs text-white/20">
-                  {profile.resumeUrl ? '✓ PDF Resume Linked' : 'No PDF uploaded'}
+                <div className="flex-grow p-4 bg-black/40 border border-dashed border-white/10 rounded-sm text-xs text-white/20 uppercase tracking-widest">
+                  {profile.resumeUrl ? '✓ PDF Linked' : 'No document attached'}
                 </div>
                 <label className="bg-white text-black px-6 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all cursor-pointer">
                   UPLOAD PDF
@@ -581,7 +554,7 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
           </section>
 
           <div className="flex justify-center pb-20">
-             <button onClick={() => alert('Profile changes staged in memory. Please save a project to finalize persistence or reload to discard.')} className="bg-purple-600 text-white px-12 py-5 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all">Stash Profile Changes</button>
+             <button onClick={() => alert('Profile update complete. (Project data persistence will also sync profile data)')} className="bg-purple-600 text-white px-12 py-5 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all shadow-xl">Apply Profile Changes</button>
           </div>
         </div>
       )}

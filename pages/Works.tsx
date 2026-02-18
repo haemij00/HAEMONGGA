@@ -13,7 +13,7 @@ const Works: React.FC<WorksProps> = ({ projects, onProjectClick }) => {
     <div className="min-h-screen py-24 max-w-7xl mx-auto px-6 animate-in fade-in duration-500">
       <header className="mb-20 text-center">
         <span className="text-xs tracking-[0.5em] text-purple-400 uppercase mb-4 block font-bold">Archives</span>
-        <h1 className="text-5xl font-serif mb-8 tracking-tight uppercase">Selected Works</h1>
+        <h1 className="text-5xl font-serif mb-8 tracking-tight uppercase">WORKS</h1>
         <div className="w-24 h-px bg-white/10 mx-auto" />
       </header>
 
