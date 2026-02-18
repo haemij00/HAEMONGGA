@@ -83,15 +83,15 @@ const About: React.FC<AboutProps> = ({ profile }) => {
             <h2 className="text-xs tracking-[0.5em] text-white/40 uppercase mb-8 pb-4 border-b border-white/5">Education</h2>
             <div className="space-y-8">
               {profile.education?.map((edu, idx) => (
-                <div key={idx} className="flex flex-col md:flex-row gap-4 md:gap-12 group cursor-default">
+                <div key={idx} className="flex flex-col md:flex-row gap-4 md:gap-12 group cursor-default items-baseline">
                   <span className="text-sm text-white/40 tracking-widest pt-1 min-w-[140px]">{edu.period}</span>
-                  <div>
-                    <p className="text-xl font-light text-white group-hover:text-purple-300 transition-colors">
+                  <div className="flex flex-wrap items-baseline gap-x-4">
+                    <span className="text-lg font-light text-white group-hover:text-purple-300 transition-colors">
                       {edu.school}
-                    </p>
-                    <p className="text-sm text-white/40 mt-1 uppercase tracking-widest font-bold">
+                    </span>
+                    <span className="text-xl text-white/80 uppercase tracking-widest font-bold">
                       {edu.major}
-                    </p>
+                    </span>
                   </div>
                 </div>
               ))}
@@ -106,7 +106,7 @@ const About: React.FC<AboutProps> = ({ profile }) => {
                 <div key={idx} className="flex gap-12 group cursor-default">
                   <span className="text-sm text-white/40 tracking-widest pt-1 min-w-[140px] md:min-w-0">{exp.year}</span>
                   <div>
-                    <p className="text-xl font-light group-hover:text-purple-300 transition-colors">{exp.title}</p>
+                    <p className="text-lg font-light group-hover:text-purple-300 transition-colors">{exp.title}</p>
                   </div>
                 </div>
               ))}
@@ -117,7 +117,7 @@ const About: React.FC<AboutProps> = ({ profile }) => {
           {profile.strengths && profile.strengths.length > 0 && (
             <section className="bg-white/5 p-12 border-l border-purple-500">
                <h2 className="text-xs tracking-[0.5em] text-white/40 uppercase mb-6">Strengths</h2>
-               <ul className="space-y-6 text-xl italic font-serif text-white/80">
+               <ul className="space-y-6 text-lg italic font-serif text-white/80">
                   {profile.strengths.map((str, idx) => (
                     <li key={idx}>"{str}"</li>
                   ))}
