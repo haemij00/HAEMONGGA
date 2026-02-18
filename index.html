@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haemongga | 3D Generalist & Motion Designer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            background-color: #0E0E0E;
+            color: #FFFFFF;
+            font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        /* Scroll Snap Container */
+        .snap-container {
+            height: 100vh;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        
+        /* Snap Sections */
+        .snap-section {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            min-height: 100vh;
+        }
+
+        .font-serif {
+            font-family: "Pretendard Variable", sans-serif;
+            font-weight: 700;
+        }
+
+        .font-script {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .text-ghost {
+            color: #000000;
+            text-shadow: 
+                2px 2px 0px rgba(255, 255, 255, 0.1),
+                -1px -1px 0px rgba(168, 85, 247, 0.3),
+                0 0 15px rgba(255, 255, 255, 0.2);
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+        }
+        .text-ghost-vertical {
+            color: #FFFFFF;
+            text-shadow: 
+                0 -6px 0 rgba(255, 255, 255, 0.4),
+                0 -12px 0 rgba(255, 255, 255, 0.15),
+                0 6px 0 rgba(255, 255, 255, 0.4),
+                0 12px 0 rgba(255, 255, 255, 0.15);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0E0E0E;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
