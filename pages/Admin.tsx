@@ -436,6 +436,46 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
             </div>
           </section>
 
+          {/* Strength Management Section */}
+          <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Core Strengths</h2>
+            <div className="space-y-4">
+              {profile.strengths?.map((str, idx) => (
+                <div key={idx} className="flex gap-4">
+                  <input 
+                    className="flex-grow bg-black border border-white/10 p-3 text-white text-xs outline-none focus:border-purple-500" 
+                    value={str} 
+                    placeholder={`Strength point #${idx + 1}`}
+                    onChange={e => {
+                      const newList = [...profile.strengths];
+                      newList[idx] = e.target.value;
+                      setProfile({ ...profile, strengths: newList });
+                    }} 
+                  />
+                  <button 
+                    onClick={() => {
+                      const newList = [...profile.strengths];
+                      newList.splice(idx, 1);
+                      setProfile({ ...profile, strengths: newList });
+                    }} 
+                    className="text-red-500/50 hover:text-red-500 font-bold uppercase text-[9px] tracking-widest px-2"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button 
+                onClick={() => setProfile({ ...profile, strengths: [...(profile.strengths || []), ''] })} 
+                className="text-[9px] font-bold text-purple-400 uppercase tracking-[0.3em] mt-4 hover:text-white transition-colors"
+              >
+                + ADD STRENGTH POINT
+              </button>
+              {(!profile.strengths || profile.strengths.length === 0) && (
+                <p className="text-[10px] text-white/20 italic font-sans mt-2 tracking-widest">Section is currently hidden (No data)</p>
+              )}
+            </div>
+          </section>
+
           <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
             <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Contact Channels</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

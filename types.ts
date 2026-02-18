@@ -55,4 +55,5 @@ export interface Profile {
     school: string;
     major: string;
   }[];
+  strengths: string[];
 }

@@ -64,5 +64,10 @@ export const INITIAL_PROFILE: Profile = {
   ],
   education: [
     { period: '2021.03 ~ 2025.02', school: '동아방송예술대학교', major: '디지털영상디자인과' }
+  ],
+  strengths: [
+    "컨셉 중심의 논리적인 기획 능력",
+    "상징적이고 철학적인 비주얼 연출",
+    "사회적 메시지의 감각적 시각화"
   ]
 };

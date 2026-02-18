@@ -114,14 +114,16 @@ const About: React.FC<AboutProps> = ({ profile }) => {
           </section>
 
           {/* Strength Section */}
-          <section className="bg-white/5 p-12 border-l border-purple-500">
-             <h2 className="text-xs tracking-[0.5em] text-white/40 uppercase mb-6">Strengths</h2>
-             <ul className="space-y-6 text-xl italic font-serif text-white/80">
-                <li>"컨셉 중심의 논리적인 기획 능력"</li>
-                <li>"상징적이고 철학적인 비주얼 연출"</li>
-                <li>"사회적 메시지의 감각적 시각화"</li>
-             </ul>
-          </section>
+          {profile.strengths && profile.strengths.length > 0 && (
+            <section className="bg-white/5 p-12 border-l border-purple-500">
+               <h2 className="text-xs tracking-[0.5em] text-white/40 uppercase mb-6">Strengths</h2>
+               <ul className="space-y-6 text-xl italic font-serif text-white/80">
+                  {profile.strengths.map((str, idx) => (
+                    <li key={idx}>"{str}"</li>
+                  ))}
+               </ul>
+            </section>
+          )}
 
         </div>
       </div>
