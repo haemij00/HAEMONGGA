@@ -157,8 +157,6 @@ const App: React.FC = () => {
   const handleBackToGallery = () => {
     setActiveView('main');
     setCurrentPage('works');
-    // We use a small timeout to ensure the main sections are rendered.
-    // behavior: 'auto' is used to jump immediately without 'smooth' animation which causes the "afterimage" of Home.
     setTimeout(() => {
       if (sectionRefs.works.current) {
         sectionRefs.works.current.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -176,7 +174,7 @@ const App: React.FC = () => {
   }
 
   const renderContent = () => {
-    if (activeView === 'project-detail' && selectedProjectSlug) {
+    if (activeView === 'project-detail' && selectedProjectSlug !== null) {
       const project = projects.find(p => p.slug === selectedProjectSlug);
       if (project) return (
         <div key={`project-${selectedProjectSlug}`} className="bg-[#0E0E0E] h-full overflow-y-auto">

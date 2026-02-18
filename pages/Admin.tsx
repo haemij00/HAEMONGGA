@@ -67,9 +67,26 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
 
   const handleSaveProject = () => {
     if (!editingProject) return;
-    const newList = projects.find(p => p.id === editingProject.id)
-      ? projects.map(p => p.id === editingProject.id ? editingProject : p)
-      : [...projects, editingProject];
+    
+    // Auto-generate slug if empty
+    let projectToSave = { ...editingProject };
+    if (!projectToSave.slug.trim()) {
+      projectToSave.slug = (projectToSave.title || 'untitled')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || `project-${Date.now()}`;
+    }
+
+    // Check for slug collisions
+    const isDuplicateSlug = projects.some(p => p.slug === projectToSave.slug && p.id !== projectToSave.id);
+    if (isDuplicateSlug) {
+      projectToSave.slug = `${projectToSave.slug}-${Date.now()}`;
+    }
+
+    const newList = projects.find(p => p.id === projectToSave.id)
+      ? projects.map(p => p.id === projectToSave.id ? projectToSave : p)
+      : [...projects, projectToSave];
+    
     setProjects(newList);
     setEditingProject(null);
     alert('저장되었습니다.');
@@ -159,7 +176,7 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   <input className="w-full bg-black border border-white/10 p-2 text-xs" value={editingProject.tools.join(', ')} onChange={e => setEditingProject({...editingProject, tools: e.target.value.split(',').map(s => s.trim())})} />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">URL Slug</label>
+                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">URL Slug (Will auto-generate if empty)</label>
                   <input className="w-full bg-black border border-white/10 p-2 text-xs" value={editingProject.slug} placeholder="e.g. project-one" onChange={e => setEditingProject({...editingProject, slug: e.target.value})} />
                 </div>
              </div>
