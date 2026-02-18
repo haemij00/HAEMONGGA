@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Project, ContentBlock } from '../types';
 
 interface ProjectDetailProps {
@@ -10,6 +10,7 @@ interface ProjectDetailProps {
 }
 
 const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onProjectSelect, onBack }) => {
+  const [expandedAsset, setExpandedAsset] = useState<string | null>(null);
   const isVideo = (url: string) => url?.startsWith('data:video') || url?.endsWith('.mp4') || url?.endsWith('.webm');
 
   const renderBlock = (block: ContentBlock) => {
@@ -62,7 +63,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
                 </div>
 
                 <div className="w-full sticky top-40">
-                  <div className="aspect-[4/5] bg-white/[0.03] border border-white/5 overflow-hidden">
+                  <div className="aspect-[4/5] bg-white/[0.03] border border-white/5 overflow-hidden cursor-zoom-in" onClick={() => block.data.imageUrl && setExpandedAsset(block.data.imageUrl)}>
                     {block.data.imageUrl ? (
                       isVideo(block.data.imageUrl) ? (
                         <video src={block.data.imageUrl} autoPlay muted loop playsInline className="w-full h-full object-cover" />
@@ -89,7 +90,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
         return (
           <section key={block.id} className={`w-full ${spacing} flex justify-center`}>
             <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12">
-              <div className="w-full overflow-hidden bg-white/5">
+              <div className="w-full overflow-hidden bg-white/5 cursor-zoom-in" onClick={() => setExpandedAsset(block.data)}>
                 {isVideo(block.data) ? (
                   <video src={block.data} autoPlay muted loop playsInline className="w-full h-auto" />
                 ) : (
@@ -104,6 +105,34 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
         const itemCount = block.data.length;
         const gridCols = block.settings?.columns || 2;
         
+        // Special 5 Column (2+3) Layout
+        if (gridCols === 5) {
+          return (
+            <section key={block.id} className={`w-full ${spacing}`}>
+              <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-6 lg:gap-8 items-start">
+                  {block.data.map((img: string, idx: number) => {
+                    const spanClass = idx < 2 ? 'md:col-span-3' : 'md:col-span-2';
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`w-full overflow-hidden bg-white/5 group cursor-zoom-in ${spanClass}`}
+                        onClick={() => setExpandedAsset(img)}
+                      >
+                        {isVideo(img) ? (
+                          <video src={img} autoPlay muted loop playsInline className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" />
+                        ) : (
+                          <img src={img} className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" alt="" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
         // Handle 3 items with 1+2 layout (1 featured top, 2 bottom)
         if (itemCount === 3) {
           return (
@@ -113,7 +142,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
                   {block.data.map((img: string, idx: number) => (
                     <div 
                       key={idx} 
-                      className={`w-full overflow-hidden bg-white/5 group ${idx === 0 ? 'md:col-span-2' : ''}`}
+                      className={`w-full overflow-hidden bg-white/5 group cursor-zoom-in ${idx === 0 ? 'md:col-span-2' : ''}`}
+                      onClick={() => setExpandedAsset(img)}
                     >
                       {isVideo(img) ? (
                         <video src={img} autoPlay muted loop playsInline className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" />
@@ -134,7 +164,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
             <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
               <div className={`grid ${colClass} gap-6 lg:gap-8 items-start`}>
                 {block.data.map((img: string, idx: number) => (
-                  <div key={idx} className="w-full overflow-hidden bg-white/5 group">
+                  <div key={idx} className="w-full overflow-hidden bg-white/5 group cursor-zoom-in" onClick={() => setExpandedAsset(img)}>
                     {isVideo(img) ? (
                       <video src={img} autoPlay muted loop playsInline className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" />
                     ) : (
@@ -169,7 +199,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
               </header>
               <div className="flex overflow-x-auto gap-12 pb-16 custom-scrollbar scroll-smooth">
                 {block.data.map((img: string, idx: number) => (
-                  <div key={idx} className="flex-shrink-0 w-[500px] overflow-hidden bg-white/5">
+                  <div key={idx} className="flex-shrink-0 w-[500px] overflow-hidden bg-white/5 cursor-zoom-in" onClick={() => setExpandedAsset(img)}>
                     {isVideo(img) ? <video src={img} autoPlay muted loop playsInline className="w-full h-auto" /> : <img src={img} className="w-full h-auto" alt="" />}
                     <div className="p-4 bg-black/40 backdrop-blur-sm border-t border-white/5">
                       <span className="text-[9px] tracking-widest text-white/30 uppercase font-bold">Frame 0{idx + 1}</span>
@@ -189,7 +219,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
                 {block.data.map((img: string, idx: number) => (
                   <div 
                     key={idx} 
-                    className={`${idx === 0 && block.data.length === 3 ? 'md:col-span-2' : ''} overflow-hidden bg-white/5`}
+                    className={`${idx === 0 && block.data.length === 3 ? 'md:col-span-2' : ''} overflow-hidden bg-white/5 cursor-zoom-in`}
+                    onClick={() => setExpandedAsset(img)}
                   >
                     {isVideo(img) ? <video src={img} autoPlay muted loop playsInline className="w-full h-auto" /> : <img src={img} className="w-full h-auto" alt="" />}
                   </div>
@@ -210,7 +241,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-20 items-start">
                 {block.data.map((item: any, idx: number) => (
                   <div key={idx} className="space-y-8 group">
-                    <div className="w-full aspect-video bg-white/5 overflow-hidden border border-white/5 group-hover:border-purple-500/30 transition-colors duration-500">
+                    <div className="w-full aspect-video bg-white/5 overflow-hidden border border-white/5 group-hover:border-purple-500/30 transition-colors duration-500 cursor-zoom-in" onClick={() => setExpandedAsset(item.imageUrl)}>
                       {isVideo(item.imageUrl) ? <video src={item.imageUrl} autoPlay muted loop playsInline className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" /> : <img src={item.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt="" />}
                     </div>
                     <div className="space-y-2">
@@ -231,6 +262,28 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
 
   return (
     <div className="flex min-h-screen bg-[#0E0E0E] selection:bg-purple-500/30">
+      {/* Lightbox / Expanded View Overlay */}
+      {expandedAsset && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-6 lg:p-12 animate-in fade-in duration-300 cursor-zoom-out"
+          onClick={() => setExpandedAsset(null)}
+        >
+          <div className="relative max-w-7xl max-h-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            {isVideo(expandedAsset) ? (
+              <video src={expandedAsset} controls autoPlay className="max-w-full max-h-[90vh] shadow-2xl" />
+            ) : (
+              <img src={expandedAsset} className="max-w-full max-h-[90vh] object-contain shadow-2xl" alt="" />
+            )}
+            <button 
+              onClick={() => setExpandedAsset(null)}
+              className="absolute -top-12 right-0 text-white/40 hover:text-white text-xs tracking-widest font-bold uppercase py-2"
+            >
+              Close Asset ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Side Bar - Archive Navigation */}
       <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 border-r border-white/5 bg-[#0E0E0E] z-40 overflow-hidden pt-28">
         <div className="px-10 mb-12">

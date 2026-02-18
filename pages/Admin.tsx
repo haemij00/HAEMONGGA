@@ -319,6 +319,7 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                             <option value={2}>2 Columns</option>
                             <option value={3}>3 Columns</option>
                             <option value={4}>4 Columns</option>
+                            <option value={5}>5 Columns (2+3 Layout)</option>
                           </select>
                         )}
                         <label className="bg-white/10 hover:bg-white/20 px-4 py-2 text-[9px] font-bold uppercase tracking-widest cursor-pointer transition-colors">

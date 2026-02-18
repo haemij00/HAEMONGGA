@@ -12,7 +12,7 @@ export interface ContentBlock {
     fontFamily?: 'font-sans' | 'font-serif'; // font-serif: Section Font(Bold), font-sans: Content Font(Light)
     textAlign?: 'text-left' | 'text-center' | 'text-right';
     width?: 'w-1/2' | 'w-3/4' | 'w-full';
-    columns?: number; // For grid-gallery: 2, 3, 4
+    columns?: number; // For grid-gallery: 2, 3, 4, 5
     verticalSpacing?: 'py-0' | 'py-12' | 'py-24' | 'py-32' | 'py-48' | 'py-64'; // New: Section Spacing
   };
 }
