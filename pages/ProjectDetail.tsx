@@ -13,7 +13,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
   const isVideo = (url: string) => url?.startsWith('data:video') || url?.endsWith('.mp4') || url?.endsWith('.webm');
 
   const renderBlock = (block: ContentBlock) => {
-    const spacing = block.settings?.verticalSpacing || 'py-32'; // Increased default spacing for premium feel
+    const spacing = block.settings?.verticalSpacing || 'py-32'; 
 
     switch (block.type) {
       case 'video':
@@ -30,53 +30,55 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
 
       case 'concept':
         return (
-          <section key={block.id} className={`w-full max-w-7xl mx-auto px-6 lg:px-12 ${spacing} border-t border-white/5`}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-start pt-20">
-              <div className="space-y-16">
-                <div className="space-y-4">
-                  <span className="text-[10px] tracking-[0.5em] text-purple-500 uppercase font-bold font-sans block">01 / Logic</span>
-                  <h2 className="text-3xl font-serif uppercase tracking-tight">Concept & Direction</h2>
-                </div>
-                
+          <section key={block.id} className={`w-full ${spacing} border-t border-white/5`}>
+            <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-start pt-20">
                 <div className="space-y-16">
-                  <div className="group">
-                    <h3 className="text-xs font-bold mb-4 tracking-[0.2em] uppercase text-white/30 group-hover:text-purple-400 transition-colors duration-500 font-sans">01. Background</h3>
-                    <p className="text-white/70 leading-relaxed font-light text-lg font-sans max-w-xl">
-                      {block.data.background}
-                    </p>
+                  <div className="space-y-4">
+                    <span className="text-[10px] tracking-[0.5em] text-purple-500 uppercase font-bold font-sans block">01 / Logic</span>
+                    <h2 className="text-3xl font-serif uppercase tracking-tight">Concept & Direction</h2>
                   </div>
-                  <div className="group">
-                    <h3 className="text-xs font-bold mb-4 tracking-[0.2em] uppercase text-white/30 group-hover:text-purple-400 transition-colors duration-500 font-sans">02. Visual Strategy</h3>
-                    <p className="text-white/70 leading-relaxed font-light text-lg font-sans max-w-xl">
-                      {block.data.visualStrategy}
-                    </p>
-                  </div>
-                  <div className="group">
-                    <h3 className="text-xs font-bold mb-4 tracking-[0.2em] uppercase text-white/30 group-hover:text-purple-400 transition-colors duration-500 font-sans">03. Message</h3>
-                    <p className="text-white/70 leading-relaxed font-light text-lg font-sans max-w-xl">
-                      {block.data.message}
-                    </p>
+                  
+                  <div className="space-y-16">
+                    <div className="group">
+                      <h3 className="text-xs font-bold mb-4 tracking-[0.2em] uppercase text-white/30 group-hover:text-purple-400 transition-colors duration-500 font-sans">01. Background</h3>
+                      <p className="text-white/70 leading-relaxed font-light text-lg font-sans max-w-xl">
+                        {block.data.background}
+                      </p>
+                    </div>
+                    <div className="group">
+                      <h3 className="text-xs font-bold mb-4 tracking-[0.2em] uppercase text-white/30 group-hover:text-purple-400 transition-colors duration-500 font-sans">02. Visual Strategy</h3>
+                      <p className="text-white/70 leading-relaxed font-light text-lg font-sans max-w-xl">
+                        {block.data.visualStrategy}
+                      </p>
+                    </div>
+                    <div className="group">
+                      <h3 className="text-xs font-bold mb-4 tracking-[0.2em] uppercase text-white/30 group-hover:text-purple-400 transition-colors duration-500 font-sans">03. Message</h3>
+                      <p className="text-white/70 leading-relaxed font-light text-lg font-sans max-w-xl">
+                        {block.data.message}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="w-full sticky top-40">
-                <div className="aspect-[4/5] bg-white/[0.03] border border-white/5 overflow-hidden">
-                   {block.data.imageUrl ? (
-                     isVideo(block.data.imageUrl) ? (
-                       <video src={block.data.imageUrl} autoPlay muted loop playsInline className="w-full h-full object-cover" />
-                     ) : (
-                       <img src={block.data.imageUrl} className="w-full h-full object-cover" alt="Concept Visualization" />
-                     )
-                   ) : (
-                     <div className="w-full h-full flex items-center justify-center text-[10px] tracking-[0.5em] text-white/10 uppercase italic font-sans">
-                       Conceptual Reference
-                     </div>
-                   )}
-                </div>
-                <div className="mt-6 flex items-center gap-4 text-[9px] tracking-[0.3em] text-white/20 uppercase font-bold">
-                   <div className="w-8 h-px bg-white/10" />
-                   Key Visual Study
+                <div className="w-full sticky top-40">
+                  <div className="aspect-[4/5] bg-white/[0.03] border border-white/5 overflow-hidden">
+                    {block.data.imageUrl ? (
+                      isVideo(block.data.imageUrl) ? (
+                        <video src={block.data.imageUrl} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                      ) : (
+                        <img src={block.data.imageUrl} className="w-full h-full object-cover" alt="Concept Visualization" />
+                      )
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] tracking-[0.5em] text-white/10 uppercase italic font-sans">
+                        Conceptual Reference
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-6 flex items-center gap-4 text-[9px] tracking-[0.3em] text-white/20 uppercase font-bold">
+                    <div className="w-8 h-px bg-white/10" />
+                    Key Visual Study
+                  </div>
                 </div>
               </div>
             </div>
@@ -85,32 +87,62 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
 
       case 'large-image':
         return (
-          <section key={block.id} className={`w-full ${spacing} flex justify-center px-6 lg:px-12`}>
-            <div className={`${block.settings?.width || 'w-full'} max-w-[1400px] overflow-hidden bg-white/5`}>
-               {isVideo(block.data) ? (
-                 <video src={block.data} autoPlay muted loop playsInline className="w-full h-auto" />
-               ) : (
-                 <img src={block.data} className="w-full h-auto" alt="Visual Detail" />
-               )}
+          <section key={block.id} className={`w-full ${spacing} flex justify-center`}>
+            <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12">
+              <div className="w-full overflow-hidden bg-white/5">
+                {isVideo(block.data) ? (
+                  <video src={block.data} autoPlay muted loop playsInline className="w-full h-auto" />
+                ) : (
+                  <img src={block.data} className="w-full h-auto" alt="Visual Detail" />
+                )}
+              </div>
             </div>
           </section>
         );
 
       case 'grid-gallery':
+        const itemCount = block.data.length;
         const gridCols = block.settings?.columns || 2;
+        
+        // Handle 3 items with 1+2 layout (1 featured top, 2 bottom)
+        if (itemCount === 3) {
+          return (
+            <section key={block.id} className={`w-full ${spacing}`}>
+              <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-start">
+                  {block.data.map((img: string, idx: number) => (
+                    <div 
+                      key={idx} 
+                      className={`w-full overflow-hidden bg-white/5 group ${idx === 0 ? 'md:col-span-2' : ''}`}
+                    >
+                      {isVideo(img) ? (
+                        <video src={img} autoPlay muted loop playsInline className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" />
+                      ) : (
+                        <img src={img} className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" alt="" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
         const colClass = gridCols === 2 ? 'grid-cols-1 md:grid-cols-2' : gridCols === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4';
         return (
-          <section key={block.id} className={`max-w-[1400px] mx-auto px-6 lg:px-12 ${spacing}`}>
-            <div className={`grid ${colClass} gap-6 lg:gap-8 items-start`}>
-              {block.data.map((img: string, idx: number) => (
-                <div key={idx} className="w-full overflow-hidden bg-white/5 group">
-                   {isVideo(img) ? (
-                     <video src={img} autoPlay muted loop playsInline className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" />
-                   ) : (
-                     <img src={img} className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" alt="" />
-                   )}
-                </div>
-              ))}
+          <section key={block.id} className={`w-full ${spacing}`}>
+            <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+              <div className={`grid ${colClass} gap-6 lg:gap-8 items-start`}>
+                {block.data.map((img: string, idx: number) => (
+                  <div key={idx} className="w-full overflow-hidden bg-white/5 group">
+                    {isVideo(img) ? (
+                      <video src={img} autoPlay muted loop playsInline className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" />
+                    ) : (
+                      <img src={img} className="w-full h-auto group-hover:scale-105 transition-transform duration-1000 ease-out" alt="" />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         );
@@ -118,9 +150,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
       case 'text':
         const fontClass = block.settings?.fontFamily === 'font-serif' ? 'font-serif font-bold tracking-tight' : 'font-sans font-light';
         return (
-          <section key={block.id} className={`max-w-7xl mx-auto px-6 lg:px-12 ${spacing} ${block.settings?.textAlign} ${fontClass}`}>
-            <div className={`${block.settings?.fontSize} leading-snug text-white/90 whitespace-pre-wrap max-w-4xl mx-auto`}>
-              {block.data}
+          <section key={block.id} className={`w-full ${spacing} ${fontClass}`}>
+            <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+              <div className={`${block.settings?.fontSize} ${block.settings?.textAlign || 'text-left'} leading-snug text-white/90 whitespace-pre-wrap w-full`}>
+                {block.data}
+              </div>
             </div>
           </section>
         );
@@ -128,7 +162,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
       case 'storyboard':
         return (
           <section key={block.id} className={`bg-white/[0.01] ${spacing} border-t border-b border-white/5 overflow-hidden`}>
-            <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
               <header className="mb-20">
                 <span className="text-[10px] tracking-[0.5em] text-purple-400 uppercase font-bold font-sans block mb-4">Narrative</span>
                 <h2 className="text-4xl font-serif uppercase tracking-tight">Visual Storyboarding</h2>
@@ -149,13 +183,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
 
       case 'gallery':
         return (
-          <section key={block.id} className={`max-w-7xl mx-auto px-6 lg:px-12 ${spacing}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-              {block.data.map((img: string, idx: number) => (
-                <div key={idx} className={`${idx === 0 ? 'md:col-span-2' : ''} overflow-hidden bg-white/5`}>
-                  {isVideo(img) ? <video src={img} autoPlay muted loop playsInline className="w-full h-auto" /> : <img src={img} className="w-full h-auto" alt="" />}
-                </div>
-              ))}
+          <section key={block.id} className={`w-full ${spacing}`}>
+            <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-start">
+                {block.data.map((img: string, idx: number) => (
+                  <div 
+                    key={idx} 
+                    className={`${idx === 0 && block.data.length === 3 ? 'md:col-span-2' : ''} overflow-hidden bg-white/5`}
+                  >
+                    {isVideo(img) ? <video src={img} autoPlay muted loop playsInline className="w-full h-auto" /> : <img src={img} className="w-full h-auto" alt="" />}
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         );
@@ -163,7 +202,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
       case 'process':
         return (
           <section key={block.id} className={`bg-[#0A0A0A] ${spacing} border-t border-white/5 pt-32`}>
-            <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
               <div className="text-center mb-32 space-y-6">
                 <span className="text-[10px] tracking-[0.6em] text-white/30 uppercase font-bold font-sans">Behind the Curtains</span>
                 <h2 className="text-5xl font-serif uppercase tracking-tighter">Process Milestones</h2>
@@ -241,7 +280,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
       {/* Main Content Area */}
       <div className="flex-1 overflow-x-hidden animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-64">
         {/* Header Section - Tightened Spacing */}
-        <section className="max-w-7xl mx-auto px-6 lg:px-12 pt-28 pb-10">
+        <section className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-28 pb-10">
           <div className="flex flex-col gap-8 mb-12">
             <div className="space-y-6 max-w-5xl">
               <div className="flex items-center gap-6">
@@ -289,7 +328,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onP
         </div>
 
         {/* Footer Navigation */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 pt-64 pb-20 text-center">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-64 pb-20 text-center">
            <div className="mb-20 w-12 h-12 border border-white/10 rounded-full flex items-center justify-center mx-auto animate-bounce opacity-30">
               <span className="text-[10px] text-white">↓</span>
            </div>

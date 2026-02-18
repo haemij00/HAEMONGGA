@@ -109,7 +109,7 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
           </div>
           <div className="flex gap-4">
             <button onClick={() => setEditingProject(null)} className="text-[10px] text-white/40 font-bold uppercase px-4 hover:text-white transition-colors">Close</button>
-            <button onClick={handleSaveProject} className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-2 text-[10px] font-bold uppercase rounded-sm transition-all shadow-lg">Save Changes</button>
+            <button onClick={handleSaveProject} className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 text-[10px] font-bold uppercase rounded-sm transition-all shadow-lg">Save Changes</button>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                       const bs = [...editingProject.blocks]; bs[idx].data = e.target.value;
                       setEditingProject({...editingProject, blocks: bs});
                     }} />
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                        <select className="bg-black border border-white/10 p-2 text-xs" value={block.settings?.fontSize} onChange={e => {
                          const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, fontSize: e.target.value as any};
                          setEditingProject({...editingProject, blocks: bs});
@@ -209,6 +209,14 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                        }}>
                          <option value="font-sans">Sans (Light)</option>
                          <option value="font-serif">Serif (Bold)</option>
+                       </select>
+                       <select className="bg-black border border-white/10 p-2 text-xs" value={block.settings?.textAlign || 'text-left'} onChange={e => {
+                         const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, textAlign: e.target.value as any};
+                         setEditingProject({...editingProject, blocks: bs});
+                       }}>
+                         <option value="text-left">Align Left</option>
+                         <option value="text-center">Align Center</option>
+                         <option value="text-right">Align Right</option>
                        </select>
                     </div>
                   </div>
