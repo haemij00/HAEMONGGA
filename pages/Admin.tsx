@@ -412,6 +412,48 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
 
       {activeTab === 'profile' && (
         <div className="space-y-12 animate-in fade-in duration-700">
+          {/* Home Page Info Settings Section */}
+          <section className="bg-[#1A1A1A] p-10 border border-purple-500/30 rounded-sm shadow-[0_0_30px_rgba(147,51,234,0.05)]">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Home Page Content (Separate from Profile)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block tracking-widest">Home Alias Title (e.g. HAEMONGA)</label>
+                  <input 
+                    className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500 font-bold uppercase tracking-[0.2em] font-sans text-sm" 
+                    value={profile.homeTitle || ''} 
+                    placeholder="HAEMONGA"
+                    onChange={e => setProfile({...profile, homeTitle: e.target.value})} 
+                  />
+                  <p className="text-[9px] text-white/20 mt-2 italic font-sans">Landing page main title. Independent from general profile alias.</p>
+                </div>
+                <div>
+                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block tracking-widest">Home Name/Subtitle (e.g. Jeon Haemi)</label>
+                  <input 
+                    className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500 font-medium font-sans text-sm" 
+                    value={profile.homeSubtitle || ''} 
+                    placeholder="Jeon Haemi"
+                    onChange={e => setProfile({...profile, homeSubtitle: e.target.value})} 
+                  />
+                  <p className="text-[9px] text-white/20 mt-2 italic font-sans">Landing page subtitle. Keep in English for style as requested.</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-4">
+                <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest block">Home Title Toggle</label>
+                <button 
+                  onClick={() => setProfile({...profile, showHomeTitle: !profile.showHomeTitle})}
+                  className={`w-full py-3 text-[10px] font-bold uppercase tracking-widest rounded-sm border transition-all ${
+                    profile.showHomeTitle !== false 
+                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg' 
+                    : 'bg-white/5 border-white/10 text-white/30'
+                  }`}
+                >
+                  {profile.showHomeTitle !== false ? 'TITLE IS VISIBLE' : 'TITLE IS HIDDEN'}
+                </button>
+              </div>
+            </div>
+          </section>
+
           <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
             <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Personal Identity</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

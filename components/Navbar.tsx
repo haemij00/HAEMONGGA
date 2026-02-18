@@ -25,7 +25,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onPageChange, onOpenAdmin 
           onClick={() => onPageChange('home')}
         >
           <span className="text-lg font-bold tracking-tighter group-hover:text-purple-400 transition-colors uppercase">
-            HAEMONGGA
+            HAEMONGA
           </span>
           <span className="mx-2 text-lg text-white/20">|</span>
           <span className="text-lg text-white/40 tracking-tight font-medium group-hover:text-purple-300 transition-colors uppercase">

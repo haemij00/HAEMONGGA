@@ -1,19 +1,24 @@
 
 import React from 'react';
+import { Profile } from '../types';
 
 interface HomeProps {
-  heroImageUrl: string;
+  profile: Profile;
   onNavigateToWorks: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({ heroImageUrl, onNavigateToWorks }) => {
+const Home: React.FC<HomeProps> = ({ profile, onNavigateToWorks }) => {
+  const showTitle = profile.showHomeTitle !== false;
+  const homeTitle = profile.homeTitle || 'HAEMONGA';
+  const homeSubtitle = profile.homeSubtitle || 'Jeon Haemi';
+
   return (
     <div className="animate-in fade-in duration-700">
       {/* Hero Section */}
       <section className="relative h-screen overflow-hidden">
         <div className="absolute inset-0 bg-[#0E0E0E]">
           <img 
-            src={heroImageUrl} 
+            src={profile.heroImageUrl} 
             className="w-full h-full object-cover opacity-50 mix-blend-luminosity"
             alt="Hero Background"
           />
@@ -21,20 +26,22 @@ const Home: React.FC<HomeProps> = ({ heroImageUrl, onNavigateToWorks }) => {
         </div>
 
         <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
-          <h1 className="text-6xl md:text-8xl font-bold mb-12 tracking-[0.25em] animate-in slide-in-from-bottom-8 duration-1000 uppercase text-ghost-vertical">
-            PORTFOLIO
-          </h1>
+          {showTitle && (
+            <h1 className="text-5xl md:text-7xl font-semibold mb-12 tracking-[0.25em] animate-in slide-in-from-bottom-8 duration-1000 uppercase text-ghost-vertical opacity-100">
+              {homeTitle}
+            </h1>
+          )}
           
           <p className="text-lg md:text-xl font-medium tracking-[0.2em] mb-16 animate-in slide-in-from-bottom-10 duration-1000 delay-100 text-ghost-vertical">
-            Jeon Haemi
+            {homeSubtitle}
           </p>
           
           <div className="space-y-4 mb-20 animate-in slide-in-from-bottom-12 duration-1000 delay-200">
             <p className="text-[10px] md:text-xs text-white/60 tracking-[0.5em] font-bold uppercase">
-              3D Generalist & Motion Designer
+              {profile.role}
             </p>
             <p className="text-[9px] md:text-[10px] text-white/30 tracking-[0.5em] uppercase">
-              Surreal & Symbolic Visual Storytelling
+              Concept to Reality: The Visual Interpreter
             </p>
           </div>
 

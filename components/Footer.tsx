@@ -11,7 +11,7 @@ const Footer: React.FC<FooterProps> = ({ profile }) => {
     <footer className="py-12 border-t border-white/5 bg-[#0A0A0A] shrink-0">
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="text-white/40 text-[10px] tracking-widest uppercase font-bold text-center md:text-left">
-          © 2025 HAEMONGGA (HAEMI JEON). ALL RIGHTS RESERVED.
+          © 2025 HAEMONGA (HAEMI JEON). ALL RIGHTS RESERVED.
         </div>
         <div className="flex space-x-12">
           <a 

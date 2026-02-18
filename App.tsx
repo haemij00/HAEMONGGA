@@ -139,6 +139,7 @@ const App: React.FC = () => {
 
     if (activeView !== 'main') {
       setActiveView('main');
+      setCurrentPage(pageId);
       setTimeout(() => {
         sectionRefs[pageId as keyof typeof sectionRefs]?.current?.scrollIntoView({ behavior: 'smooth' });
       }, 50);
@@ -151,6 +152,18 @@ const App: React.FC = () => {
     setSelectedProjectSlug(slug);
     setActiveView('project-detail');
     window.scrollTo(0, 0);
+  };
+
+  const handleBackToGallery = () => {
+    setActiveView('main');
+    setCurrentPage('works');
+    // We use a small timeout to ensure the main sections are rendered.
+    // behavior: 'auto' is used to jump immediately without 'smooth' animation which causes the "afterimage" of Home.
+    setTimeout(() => {
+      if (sectionRefs.works.current) {
+        sectionRefs.works.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+    }, 30);
   };
 
   if (!isHydrated) {
@@ -167,7 +180,12 @@ const App: React.FC = () => {
       const project = projects.find(p => p.slug === selectedProjectSlug);
       if (project) return (
         <div key={`project-${selectedProjectSlug}`} className="bg-[#0E0E0E] h-full overflow-y-auto">
-          <ProjectDetail project={project} onBack={() => setActiveView('main')} />
+          <ProjectDetail 
+            project={project} 
+            allProjects={projects}
+            onProjectSelect={handleNavigateToProject}
+            onBack={handleBackToGallery} 
+          />
           <Footer profile={profile} />
         </div>
       );
@@ -186,7 +204,7 @@ const App: React.FC = () => {
       <div className="snap-container h-full" ref={scrollContainerRef}>
         <section id="home" ref={sectionRefs.home} className="snap-section">
           <Home 
-            heroImageUrl={profile.heroImageUrl}
+            profile={profile}
             onNavigateToWorks={() => handlePageChange('works')} 
           />
         </section>

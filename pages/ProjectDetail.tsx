@@ -4,10 +4,12 @@ import { Project, ContentBlock } from '../types';
 
 interface ProjectDetailProps {
   project: Project;
+  allProjects: Project[];
+  onProjectSelect: (slug: string) => void;
   onBack: () => void;
 }
 
-const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
+const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, allProjects, onProjectSelect, onBack }) => {
   const isVideo = (url: string) => url?.startsWith('data:video') || url?.endsWith('.mp4') || url?.endsWith('.webm');
 
   const renderBlock = (block: ContentBlock) => {
@@ -158,45 +160,94 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
   };
 
   return (
-    <div className="animate-in fade-in duration-1000 pb-40">
-      {/* 고정 메타데이터 헤더 */}
-      <section className="max-w-7xl mx-auto px-6 pt-32 pb-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-          <div className="max-w-4xl">
-            <span className="text-xs tracking-[0.5em] text-purple-400 uppercase mb-6 block font-bold font-sans">Project Details</span>
-            <h1 className="text-5xl md:text-8xl font-serif mb-8 leading-tight tracking-tighter uppercase">{project.title}</h1>
-            <p className="text-xl md:text-2xl text-white/50 font-light leading-relaxed italic max-w-3xl font-sans">"{project.shortDesc}"</p>
-          </div>
-          <button onClick={onBack} className="text-[10px] tracking-[0.4em] text-white/30 hover:text-white uppercase font-bold border-b border-white/10 pb-1 font-sans">Close Project</button>
+    <div className="flex min-h-screen bg-[#0E0E0E]">
+      {/* Side Bar - Navigation for easy switching */}
+      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-white/5 bg-[#0E0E0E]/50 backdrop-blur-sm z-40 overflow-hidden pt-28">
+        <div className="px-8 mb-10">
+          <span className="text-[9px] tracking-[0.5em] text-white/20 uppercase font-bold">Archives</span>
+          <div className="w-8 h-px bg-white/10 mt-2" />
+        </div>
+        
+        <div className="flex-1 overflow-y-auto px-6 custom-scrollbar space-y-4">
+          {allProjects.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => onProjectSelect(p.slug)}
+              className={`group flex flex-col items-start w-full transition-all duration-500 ${
+                p.slug === project.slug ? 'opacity-100' : 'opacity-30 hover:opacity-100'
+              }`}
+            >
+              <div className="relative w-full aspect-video overflow-hidden bg-white/5 mb-3">
+                 {isVideo(p.thumbnailUrl) ? (
+                   <video src={p.thumbnailUrl} className="w-full h-full object-cover" />
+                 ) : (
+                   <img src={p.thumbnailUrl} className="w-full h-full object-cover" alt="" />
+                 )}
+                 {p.slug === project.slug && (
+                    <div className="absolute inset-0 border-2 border-purple-500/50" />
+                 )}
+              </div>
+              <p className={`text-[10px] tracking-widest uppercase font-bold truncate w-full text-left ${
+                p.slug === project.slug ? 'text-purple-400' : 'text-white'
+              }`}>
+                {p.title}
+              </p>
+            </button>
+          ))}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-10 border-t border-b border-white/5 text-sm font-sans">
-          <div>
-            <p className="text-white/30 tracking-widest uppercase mb-2 text-[10px] font-bold">Duration</p>
-            <p className="text-white font-medium">{project.duration}</p>
-          </div>
-          <div>
-            <p className="text-white/30 tracking-widest uppercase mb-2 text-[10px] font-bold">Year</p>
-            <p className="text-white font-medium">{project.year}</p>
-          </div>
-          <div>
-            <p className="text-white/30 tracking-widest uppercase mb-2 text-[10px] font-bold">Main Role</p>
-            <p className="text-white font-medium">{project.role}</p>
-          </div>
-          <div>
-            <p className="text-white/30 tracking-widest uppercase mb-2 text-[10px] font-bold">Tools</p>
-            <p className="text-purple-300 font-medium">{project.tools.join(', ')}</p>
-          </div>
+        <div className="p-8 border-t border-white/5">
+          <button 
+            onClick={onBack}
+            className="text-[9px] tracking-[0.4em] text-white/40 hover:text-white uppercase font-bold transition-colors flex items-center gap-3 group"
+          >
+            <span className="group-hover:-translate-x-1 transition-transform">←</span>
+            BACK TO WORKS
+          </button>
         </div>
-      </section>
+      </aside>
 
-      {/* 블록 렌더링 */}
-      <div className="flex flex-col">
-        {project.blocks.map(renderBlock)}
-      </div>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-x-hidden animate-in fade-in duration-1000 pb-40">
+        {/* 고정 메타데이터 헤더 */}
+        <section className="max-w-7xl mx-auto px-6 pt-32 pb-10 lg:pl-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+            <div className="max-w-4xl">
+              <span className="text-xs tracking-[0.5em] text-purple-400 uppercase mb-6 block font-bold font-sans">Project Details</span>
+              <h1 className="text-5xl md:text-8xl font-serif mb-8 leading-tight tracking-tighter uppercase">{project.title}</h1>
+              <p className="text-xl md:text-2xl text-white/50 font-light leading-relaxed italic max-w-3xl font-sans">"{project.shortDesc}"</p>
+            </div>
+            <button onClick={onBack} className="lg:hidden text-[10px] tracking-[0.4em] text-white/30 hover:text-white uppercase font-bold border-b border-white/10 pb-1 font-sans">Close Project</button>
+          </div>
 
-      <div className="text-center py-40 border-t border-white/5 font-sans">
-         <button onClick={onBack} className="px-16 py-6 border border-white/10 text-[10px] tracking-[0.6em] font-bold uppercase hover:bg-white/5 transition-all">Back to Gallery</button>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-10 border-t border-b border-white/5 text-sm font-sans">
+            <div>
+              <p className="text-white/30 tracking-widest uppercase mb-2 text-[10px] font-bold">Duration</p>
+              <p className="text-white font-medium">{project.duration}</p>
+            </div>
+            <div>
+              <p className="text-white/30 tracking-widest uppercase mb-2 text-[10px] font-bold">Year</p>
+              <p className="text-white font-medium">{project.year}</p>
+            </div>
+            <div>
+              <p className="text-white/30 tracking-widest uppercase mb-2 text-[10px] font-bold">Main Role</p>
+              <p className="text-white font-medium">{project.role}</p>
+            </div>
+            <div>
+              <p className="text-white/30 tracking-widest uppercase mb-2 text-[10px] font-bold">Tools</p>
+              <p className="text-purple-300 font-medium">{project.tools.join(', ')}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 블록 렌더링 */}
+        <div className="flex flex-col lg:pl-12">
+          {project.blocks.map(renderBlock)}
+        </div>
+
+        <div className="text-center py-40 border-t border-white/5 font-sans lg:pl-12">
+           <button onClick={onBack} className="px-16 py-6 border border-white/10 text-[10px] tracking-[0.6em] font-bold uppercase hover:bg-white/5 transition-all">Back to Gallery</button>
+        </div>
       </div>
     </div>
   );

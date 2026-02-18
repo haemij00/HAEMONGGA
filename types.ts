@@ -34,6 +34,9 @@ export interface Project {
 export interface Profile {
   name: string;
   alias: string;
+  homeTitle?: string;
+  showHomeTitle?: boolean;
+  homeSubtitle?: string;
   role: string;
   email: string;
   behance: string;
