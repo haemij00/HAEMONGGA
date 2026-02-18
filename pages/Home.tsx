@@ -19,7 +19,7 @@ const Home: React.FC<HomeProps> = ({ profile, onNavigateToWorks }) => {
         <div className="absolute inset-0 bg-[#0E0E0E]">
           <img 
             src={profile.heroImageUrl} 
-            className="w-full h-full object-cover opacity-50 mix-blend-luminosity"
+            className="w-full h-full object-cover opacity-50"
             alt="Hero Background"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#0E0E0E]" />
