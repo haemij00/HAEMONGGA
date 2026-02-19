@@ -24,6 +24,29 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
     });
   };
 
+  const handleExportConfig = () => {
+    const config = {
+      projects,
+      profile
+    };
+    const configStr = JSON.stringify(config, null, 2);
+    navigator.clipboard.writeText(configStr);
+    alert('설정 코드가 클립보드에 복사되었습니다! 이 코드를 AI 개발자에게 전달하여 "이 설정으로 constants.tsx를 업데이트해줘"라고 요청하면 모든 방문자에게 수정 사항이 반영됩니다.');
+  };
+
+  const handleImportConfig = () => {
+    const code = prompt('복사해두었던 설정 코드를 여기에 붙여넣으세요:');
+    if (!code) return;
+    try {
+      const parsed = JSON.parse(code);
+      if (parsed.projects) setProjects(parsed.projects);
+      if (parsed.profile) setProfile(parsed.profile);
+      alert('데이터를 성공적으로 불러왔습니다.');
+    } catch (e) {
+      alert('올바르지 않은 코드 형식입니다.');
+    }
+  };
+
   const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'heroImageUrl' | 'profileImageUrl' | 'resumeUrl') => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -403,6 +426,20 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
           <button onClick={() => setActiveTab('profile')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${activeTab === 'profile' ? 'bg-purple-600' : ''}`}>Profile & Bio</button>
         </div>
       </div>
+
+      {/* Global Sync Notice */}
+      <section className="bg-purple-900/10 border border-purple-500/30 p-8 rounded-sm mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex-1">
+          <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-purple-400 mb-2">Publishing & Global Sync</h2>
+          <p className="text-[10px] text-white/50 leading-relaxed max-w-lg">
+            현재 수정 사항은 이 브라우저에만 저장되어 있습니다. 다른 기기나 방문자에게도 반영하려면 아래 버튼을 눌러 설정 코드를 복사한 뒤, 개발자(AI)에게 전달하여 <strong>constants.tsx를 업데이트해달라고</strong> 요청하세요.
+          </p>
+        </div>
+        <div className="flex gap-4">
+          <button onClick={handleImportConfig} className="px-6 py-3 border border-white/20 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all">Import Code</button>
+          <button onClick={handleExportConfig} className="px-6 py-3 bg-purple-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all shadow-lg">Copy Publish Code</button>
+        </div>
+      </section>
 
       {activeTab === 'projects' && (
         <div className="space-y-6">
