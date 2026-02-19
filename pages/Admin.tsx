@@ -398,7 +398,7 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
           <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-6 pb-2 border-b border-white/5">Firebase Firestore Connector</h2>
           <p className="text-[10px] text-white/40 mb-8 leading-relaxed">
             무료 데이터베이스(Firebase)를 연결하여 모든 방문자에게 실시간으로 업데이트된 내용을 보여줄 수 있습니다.<br/>
-            Firebase 콘솔 > 프로젝트 설정 > <strong>firebaseConfig</strong> 객체 JSON을 아래에 붙여넣으세요.
+            Firebase 콘솔 &gt; 프로젝트 설정 &gt; <strong>firebaseConfig</strong> 객체 JSON을 아래에 붙여넣으세요.
           </p>
           <textarea 
             className="w-full bg-black border border-white/10 p-6 text-xs font-mono text-purple-300 outline-none h-64 focus:border-purple-500"
