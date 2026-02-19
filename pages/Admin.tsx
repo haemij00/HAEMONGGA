@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Project, Profile, ContentBlock, BlockType } from '../types';
 
@@ -7,11 +6,14 @@ interface AdminProps {
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   profile: Profile;
   setProfile: React.Dispatch<React.SetStateAction<Profile>>;
+  firebaseConfig: any;
+  setFirebaseConfig: (config: any) => void;
 }
 
-const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfile }) => {
-  const [activeTab, setActiveTab] = useState<'projects' | 'profile'>('projects');
+const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfile, firebaseConfig, setFirebaseConfig }) => {
+  const [activeTab, setActiveTab] = useState<'projects' | 'profile' | 'database'>('projects');
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [fbInput, setFbInput] = useState(firebaseConfig ? JSON.stringify(firebaseConfig, null, 2) : '');
 
   const isVideo = (url: string) => url?.startsWith('data:video') || url?.endsWith('.mp4') || url?.endsWith('.webm');
 
@@ -22,6 +24,16 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleUpdateFirebase = () => {
+    try {
+      const parsed = JSON.parse(fbInput);
+      setFirebaseConfig(parsed);
+      alert('Firebase 설정이 저장되었습니다. 이제 모든 데이터가 클라우드 DB와 실시간으로 동기화됩니다.');
+    } catch (e) {
+      alert('JSON 형식이 올바르지 않습니다. Firebase 콘솔의 설정을 정확히 붙여넣어 주세요.');
+    }
   };
 
   const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'heroImageUrl' | 'profileImageUrl' | 'resumeUrl') => {
@@ -67,21 +79,12 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
 
   const handleSaveProject = () => {
     if (!editingProject) return;
-    
-    // Auto-generate slug if empty
     let projectToSave = { ...editingProject };
     if (!projectToSave.slug.trim()) {
-      projectToSave.slug = (projectToSave.title || 'untitled')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '') || `project-${Date.now()}`;
+      projectToSave.slug = (projectToSave.title || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `project-${Date.now()}`;
     }
-
-    // Check for slug collisions
     const isDuplicateSlug = projects.some(p => p.slug === projectToSave.slug && p.id !== projectToSave.id);
-    if (isDuplicateSlug) {
-      projectToSave.slug = `${projectToSave.slug}-${Date.now()}`;
-    }
+    if (isDuplicateSlug) { projectToSave.slug = `${projectToSave.slug}-${Date.now()}`; }
 
     const newList = projects.find(p => p.id === projectToSave.id)
       ? projects.map(p => p.id === projectToSave.id ? projectToSave : p)
@@ -89,22 +92,19 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
     
     setProjects(newList);
     setEditingProject(null);
-    alert('저장되었습니다.');
+    alert('프로젝트가 저장되었습니다. (DB 동기화 진행 중)');
   };
 
   const SpacingSelector = (block: ContentBlock, idx: number) => (
     <div className="flex flex-col gap-1">
       <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest">Vertical Spacing</label>
-      <select 
-        className="bg-black border border-white/10 p-2 text-[10px] text-white outline-none" 
-        value={block.settings?.verticalSpacing || 'py-24'} 
+      <select className="bg-black border border-white/10 p-2 text-[10px] text-white outline-none" value={block.settings?.verticalSpacing || 'py-24'} 
         onChange={e => {
           if (!editingProject) return;
           const bs = [...editingProject.blocks];
           bs[idx].settings = { ...bs[idx].settings, verticalSpacing: e.target.value as any };
           setEditingProject({ ...editingProject, blocks: bs });
-        }}
-      >
+        }}>
         <option value="py-0">None (0)</option>
         <option value="py-12">Small (12)</option>
         <option value="py-24">Medium (24)</option>
@@ -112,6 +112,24 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
         <option value="py-48">Extra Large (48)</option>
         <option value="py-64">Extreme (64)</option>
       </select>
+    </div>
+  );
+
+  const renderArrayField = (label: string, items: any[], onAdd: () => void, onRemove: (idx: number) => void, renderItem: (item: any, idx: number) => React.ReactNode) => (
+    <div className="mb-12">
+      <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-2">
+        <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest">{label}</label>
+        <button onClick={onAdd} className="text-[10px] text-purple-400 font-bold uppercase hover:text-white">+ Add Item</button>
+      </div>
+      <div className="space-y-4">
+        {items.map((item, idx) => (
+          <div key={idx} className="flex gap-4 items-start group">
+            <div className="flex-grow">{renderItem(item, idx)}</div>
+            <button onClick={() => onRemove(idx)} className="text-[10px] text-white/20 hover:text-red-500 mt-2">✕</button>
+          </div>
+        ))}
+        {items.length === 0 && <p className="text-[10px] text-white/20 italic">No items added.</p>}
+      </div>
     </div>
   );
 
@@ -176,7 +194,7 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   <input className="w-full bg-black border border-white/10 p-2 text-xs" value={editingProject.tools.join(', ')} onChange={e => setEditingProject({...editingProject, tools: e.target.value.split(',').map(s => s.trim())})} />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">URL Slug (Will auto-generate if empty)</label>
+                  <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest mb-2 block">URL Slug</label>
                   <input className="w-full bg-black border border-white/10 p-2 text-xs" value={editingProject.slug} placeholder="e.g. project-one" onChange={e => setEditingProject({...editingProject, slug: e.target.value})} />
                 </div>
              </div>
@@ -197,195 +215,165 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
                   <button onClick={() => moveBlock(idx, 'down')} className="p-2 bg-white/10 rounded-full hover:bg-purple-600">↓</button>
                   <button onClick={() => deleteBlock(block.id)} className="p-2 bg-red-900/50 rounded-full hover:bg-red-600 text-xs">✕</button>
                 </div>
-
                 <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                   <span className="text-[10px] text-purple-400 font-bold uppercase tracking-[0.3em]">{block.type} section</span>
                   {SpacingSelector(block, idx)}
                 </div>
 
+                {/* --- Text Block --- */}
                 {block.type === 'text' && (
                   <div className="space-y-6">
                     <textarea className="w-full bg-black border border-white/10 p-4 text-white outline-none min-h-[150px] font-light" value={block.data} onChange={e => {
-                      const bs = [...editingProject.blocks]; bs[idx].data = e.target.value;
-                      setEditingProject({...editingProject, blocks: bs});
+                      const bs = [...editingProject.blocks]; bs[idx].data = e.target.value; setEditingProject({...editingProject, blocks: bs});
                     }} />
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                        <select className="bg-black border border-white/10 p-2 text-xs" value={block.settings?.fontSize} onChange={e => {
-                         const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, fontSize: e.target.value as any};
-                         setEditingProject({...editingProject, blocks: bs});
-                       }}>
-                         <option value="text-sm">Small</option>
-                         <option value="text-base">Regular</option>
-                         <option value="text-xl">Large</option>
-                         <option value="text-3xl">Extra Large</option>
-                         <option value="text-5xl">Display</option>
-                       </select>
+                         const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, fontSize: e.target.value as any}; setEditingProject({...editingProject, blocks: bs});
+                       }}><option value="text-sm">Small</option><option value="text-base">Regular</option><option value="text-xl">Large</option><option value="text-3xl">Extra Large</option><option value="text-5xl">Display</option></select>
                        <select className="bg-black border border-white/10 p-2 text-xs" value={block.settings?.fontFamily} onChange={e => {
-                         const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, fontFamily: e.target.value as any};
-                         setEditingProject({...editingProject, blocks: bs});
-                       }}>
-                         <option value="font-sans">Sans (Light)</option>
-                         <option value="font-serif">Serif (Bold)</option>
-                       </select>
+                         const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, fontFamily: e.target.value as any}; setEditingProject({...editingProject, blocks: bs});
+                       }}><option value="font-sans">Sans (Light)</option><option value="font-serif">Serif (Bold)</option></select>
                        <select className="bg-black border border-white/10 p-2 text-xs" value={block.settings?.textAlign || 'text-left'} onChange={e => {
-                         const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, textAlign: e.target.value as any};
-                         setEditingProject({...editingProject, blocks: bs});
-                       }}>
-                         <option value="text-left">Align Left</option>
-                         <option value="text-center">Align Center</option>
-                         <option value="text-right">Align Right</option>
-                       </select>
+                         const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, textAlign: e.target.value as any}; setEditingProject({...editingProject, blocks: bs});
+                       }}><option value="text-left">Align Left</option><option value="text-center">Align Center</option><option value="text-right">Align Right</option></select>
                     </div>
                   </div>
                 )}
 
+                {/* --- Large Image/Video Block --- */}
                 {block.type === 'large-image' && (
-                  <div className="space-y-4">
-                    <div className="aspect-video bg-black relative group/file flex items-center justify-center border border-white/10">
-                      {block.data ? (
-                        isVideo(block.data) ? <video src={block.data} className="max-h-full" autoPlay muted loop /> : <img src={block.data} className="max-h-full" />
-                      ) : <span className="text-[10px] text-white/20 uppercase tracking-widest">Asset Missing</span>}
-                      <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/file:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
-                        UPLOAD ASSET
-                        <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
-                          const f = e.target.files?.[0]; if(!f) return;
-                          const b64 = await fileToBase64(f);
-                          const bs = [...editingProject.blocks]; bs[idx].data = b64;
-                          setEditingProject({...editingProject, blocks: bs});
-                        }} />
-                      </label>
-                    </div>
-                    <select className="bg-black border border-white/10 p-2 text-xs w-full" value={block.settings?.width} onChange={e => {
-                      const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, width: e.target.value as any};
-                      setEditingProject({...editingProject, blocks: bs});
-                    }}>
-                      <option value="w-1/2">50% Width</option>
-                      <option value="w-3/4">75% Width</option>
-                      <option value="w-full">100% Width</option>
-                    </select>
+                  <div className="aspect-video bg-black relative border border-white/10 group/img flex items-center justify-center">
+                    {block.data ? (
+                      isVideo(block.data) ? <video src={block.data} className="max-h-full" autoPlay muted loop /> : <img src={block.data} className="max-h-full" />
+                    ) : <span className="text-[10px] text-white/20 uppercase tracking-widest">Upload Asset</span>}
+                    <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center cursor-pointer text-[10px] font-bold transition-opacity">
+                      CHANGE ASSET
+                      <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
+                        const f = e.target.files?.[0]; if(!f) return;
+                        const b64 = await fileToBase64(f);
+                        const bs = [...editingProject.blocks]; bs[idx].data = b64; setEditingProject({...editingProject, blocks: bs});
+                      }} />
+                    </label>
                   </div>
                 )}
 
+                {/* --- Video/Iframe Block --- */}
                 {block.type === 'video' && (
-                  <div>
-                    <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Embed Iframe (YouTube/Vimeo)</label>
-                    <textarea className="w-full bg-black border border-white/10 p-3 text-xs font-mono outline-none h-24" value={block.data} onChange={e => {
-                       const bs = [...editingProject.blocks]; bs[idx].data = e.target.value;
-                       setEditingProject({...editingProject, blocks: bs});
-                    }} />
+                  <div className="space-y-4">
+                    <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest">Vimeo / Youtube Iframe Embed Code</label>
+                    <textarea className="w-full bg-black border border-white/10 p-4 text-xs font-mono text-purple-300 outline-none h-32" value={block.data} onChange={e => {
+                      const bs = [...editingProject.blocks]; bs[idx].data = e.target.value; setEditingProject({...editingProject, blocks: bs});
+                    }} placeholder='<iframe src="..." ...></iframe>' />
                   </div>
                 )}
 
+                {/* --- Concept Block --- */}
                 {block.type === 'concept' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      {['background', 'visualStrategy', 'message'].map((f) => (
-                        <div key={f}>
-                          <label className="text-[9px] text-white/30 uppercase font-bold mb-1 block">{f}</label>
-                          <textarea className="w-full bg-black border border-white/10 p-2 text-xs h-20" value={block.data[f]} onChange={e => {
-                            const bs = [...editingProject.blocks]; bs[idx].data[f] = e.target.value;
-                            setEditingProject({...editingProject, blocks: bs});
-                          }} />
-                        </div>
-                      ))}
+                      <div><label className="text-[9px] text-white/30 uppercase font-bold mb-1 block">01. Background</label><textarea className="w-full bg-black border border-white/10 p-2 text-xs text-white" value={block.data.background} onChange={e => { const bs = [...editingProject.blocks]; bs[idx].data = {...bs[idx].data, background: e.target.value}; setEditingProject({...editingProject, blocks: bs}); }} /></div>
+                      <div><label className="text-[9px] text-white/30 uppercase font-bold mb-1 block">02. Visual Strategy</label><textarea className="w-full bg-black border border-white/10 p-2 text-xs text-white" value={block.data.visualStrategy} onChange={e => { const bs = [...editingProject.blocks]; bs[idx].data = {...bs[idx].data, visualStrategy: e.target.value}; setEditingProject({...editingProject, blocks: bs}); }} /></div>
+                      <div><label className="text-[9px] text-white/30 uppercase font-bold mb-1 block">03. Message</label><textarea className="w-full bg-black border border-white/10 p-2 text-xs text-white" value={block.data.message} onChange={e => { const bs = [...editingProject.blocks]; bs[idx].data = {...bs[idx].data, message: e.target.value}; setEditingProject({...editingProject, blocks: bs}); }} /></div>
                     </div>
-                    <div className="aspect-[4/5] bg-black relative group/file flex items-center justify-center border border-white/10">
-                      {block.data.imageUrl ? (
-                        isVideo(block.data.imageUrl) ? <video src={block.data.imageUrl} className="max-h-full" autoPlay muted loop /> : <img src={block.data.imageUrl} className="max-h-full" />
-                      ) : <span className="text-[10px] text-white/20 uppercase tracking-widest">Key Visual</span>}
-                      <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/file:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
-                        CHANGE VISUAL
-                        <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
-                          const f = e.target.files?.[0]; if(!f) return;
-                          const b64 = await fileToBase64(f);
-                          const bs = [...editingProject.blocks]; bs[idx].data.imageUrl = b64;
-                          setEditingProject({...editingProject, blocks: bs});
-                        }} />
-                      </label>
-                    </div>
-                  </div>
-                )}
-
-                {(block.type === 'grid-gallery' || block.type === 'storyboard' || block.type === 'gallery') && (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[9px] text-white/30 uppercase font-bold">Items ({block.data.length})</label>
-                      <div className="flex gap-4">
-                        {block.type === 'grid-gallery' && (
-                          <select className="bg-black border border-white/10 p-2 text-[9px] text-white outline-none uppercase font-bold" value={block.settings?.columns} onChange={e => {
-                            const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, columns: parseInt(e.target.value)};
-                            setEditingProject({...editingProject, blocks: bs});
-                          }}>
-                            <option value={2}>2 Columns</option>
-                            <option value={3}>3 Columns</option>
-                            <option value={4}>4 Columns</option>
-                            <option value={5}>5 Columns (2+3 Layout)</option>
-                          </select>
-                        )}
-                        <label className="bg-white/10 hover:bg-white/20 px-4 py-2 text-[9px] font-bold uppercase tracking-widest cursor-pointer transition-colors">
-                          Add Media
-                          <input type="file" className="hidden" accept="image/*, video/*" multiple onChange={async e => {
-                             const files = Array.from(e.target.files || []);
-                             const bases = await Promise.all(files.map(f => fileToBase64(f)));
-                             const bs = [...editingProject.blocks];
-                             bs[idx].data = [...bs[idx].data, ...bases];
-                             setEditingProject({...editingProject, blocks: bs});
+                    <div>
+                      <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Key Visualization Asset</label>
+                      <div className="aspect-[4/5] bg-black border border-white/10 relative group/cpt flex items-center justify-center">
+                        {block.data.imageUrl ? (
+                           isVideo(block.data.imageUrl) ? <video src={block.data.imageUrl} className="max-h-full" autoPlay muted loop /> : <img src={block.data.imageUrl} className="max-h-full" />
+                        ) : <span className="text-[10px] text-white/20 uppercase">Empty</span>}
+                        <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/cpt:opacity-100 flex items-center justify-center cursor-pointer text-[10px] font-bold transition-opacity">
+                          CHANGE IMAGE/VIDEO
+                          <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
+                            const f = e.target.files?.[0]; if(!f) return;
+                            const b64 = await fileToBase64(f);
+                            const bs = [...editingProject.blocks]; bs[idx].data = {...bs[idx].data, imageUrl: b64}; setEditingProject({...editingProject, blocks: bs});
                           }} />
                         </label>
                       </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-4">
-                      {block.data.map((url: string, midx: number) => (
-                        <div key={midx} className="aspect-square bg-black relative group/media border border-white/5">
-                           {isVideo(url) ? <video src={url} className="w-full h-full object-cover" /> : <img src={url} className="w-full h-full object-cover" />}
-                           <button onClick={() => {
-                             const bs = [...editingProject.blocks]; bs[idx].data.splice(midx, 1);
-                             setEditingProject({...editingProject, blocks: bs});
-                           }} className="absolute top-2 right-2 p-1 bg-red-600 rounded-full opacity-0 group-hover/media:opacity-100 transition-opacity text-[8px] z-10">✕</button>
+                  </div>
+                )}
+
+                {/* --- Grid / Storyboard / Gallery Block --- */}
+                {(block.type === 'grid-gallery' || block.type === 'storyboard' || block.type === 'gallery') && (
+                  <div className="space-y-6">
+                    {block.type === 'grid-gallery' && (
+                      <div className="flex items-center gap-4 mb-4 border-b border-white/5 pb-4">
+                        <label className="text-[9px] text-white/30 uppercase font-bold">Columns:</label>
+                        <select className="bg-black border border-white/10 text-[10px] text-white p-1" value={block.settings?.columns || 2} onChange={e => {
+                          const bs = [...editingProject.blocks]; bs[idx].settings = {...bs[idx].settings, columns: parseInt(e.target.value)}; setEditingProject({...editingProject, blocks: bs});
+                        }}>
+                          {[2,3,4,5].map(v => <option key={v} value={v}>{v} Columns</option>)}
+                        </select>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {block.data.map((item: string, assetIdx: number) => (
+                        <div key={assetIdx} className="aspect-video bg-black border border-white/10 relative group/asset flex items-center justify-center">
+                          {isVideo(item) ? <video src={item} className="max-h-full" muted /> : <img src={item} className="max-h-full" />}
+                          <button 
+                            onClick={() => {
+                              const bs = [...editingProject.blocks]; 
+                              bs[idx].data = bs[idx].data.filter((_: any, i: number) => i !== assetIdx);
+                              setEditingProject({...editingProject, blocks: bs});
+                            }}
+                            className="absolute -top-2 -right-2 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] opacity-0 group-hover/asset:opacity-100 transition-opacity"
+                          >✕</button>
                         </div>
                       ))}
+                      <label className="aspect-video border-2 border-dashed border-white/10 flex items-center justify-center cursor-pointer hover:border-purple-500 hover:text-purple-500 transition-all text-white/20">
+                        <span className="text-xl">+</span>
+                        <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
+                          const f = e.target.files?.[0]; if(!f) return;
+                          const b64 = await fileToBase64(f);
+                          const bs = [...editingProject.blocks]; 
+                          bs[idx].data = [...bs[idx].data, b64]; 
+                          setEditingProject({...editingProject, blocks: bs});
+                        }} />
+                      </label>
                     </div>
                   </div>
                 )}
 
+                {/* --- Process Block --- */}
                 {block.type === 'process' && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center mb-4">
-                       <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest">Process Milestones</label>
-                       <button onClick={() => {
-                         const bs = [...editingProject.blocks]; bs[idx].data.push({ label: '', imageUrl: '' });
-                         setEditingProject({...editingProject, blocks: bs});
-                       }} className="bg-purple-900/40 text-[9px] font-bold px-4 py-2 border border-purple-500/30">+ NEW STEP</button>
-                    </div>
-                    {block.data.map((item: any, pidx: number) => (
-                      <div key={pidx} className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/40 p-4 border border-white/5">
-                         <div className="aspect-video bg-black relative group/process flex items-center justify-center border border-white/10">
-                            {item.imageUrl ? (isVideo(item.imageUrl) ? <video src={item.imageUrl} className="max-h-full" /> : <img src={item.imageUrl} className="max-h-full" />) : <span className="text-[10px] text-white/10">Asset</span>}
-                            <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/process:opacity-100 cursor-pointer text-[8px] font-bold transition-opacity">
-                              UPLOAD
-                              <input type="file" className="hidden" onChange={async e => {
+                  <div className="space-y-6">
+                    <button onClick={() => {
+                      const bs = [...editingProject.blocks]; bs[idx].data = [...bs[idx].data, {label: '', imageUrl: ''}]; setEditingProject({...editingProject, blocks: bs});
+                    }} className="text-[10px] text-purple-400 font-bold uppercase mb-4">+ Add Step</button>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                       {block.data.map((step: any, sIdx: number) => (
+                         <div key={sIdx} className="bg-white/5 border border-white/10 p-4 space-y-4 group/step relative">
+                           <button onClick={() => {
+                             const bs = [...editingProject.blocks]; bs[idx].data = bs[idx].data.filter((_:any, i:number) => i !== sIdx); setEditingProject({...editingProject, blocks: bs});
+                           }} className="absolute top-2 right-2 text-white/20 hover:text-red-500">✕</button>
+                           <div className="aspect-video bg-black relative group/pimg flex items-center justify-center">
+                             {step.imageUrl ? (
+                               isVideo(step.imageUrl) ? <video src={step.imageUrl} className="max-h-full" /> : <img src={step.imageUrl} className="max-h-full" />
+                             ) : <span className="text-[9px] text-white/10">No Image</span>}
+                             <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/pimg:opacity-100 flex items-center justify-center cursor-pointer text-[10px] font-bold">
+                               UPLOAD
+                               <input type="file" className="hidden" accept="image/*, video/*" onChange={async e => {
                                  const f = e.target.files?.[0]; if(!f) return;
                                  const b64 = await fileToBase64(f);
-                                 const bs = [...editingProject.blocks]; bs[idx].data[pidx].imageUrl = b64;
-                                 setEditingProject({...editingProject, blocks: bs});
-                              }} />
-                            </label>
+                                 const bs = [...editingProject.blocks]; bs[idx].data[sIdx].imageUrl = b64; setEditingProject({...editingProject, blocks: bs});
+                               }} />
+                             </label>
+                           </div>
+                           <input 
+                             className="w-full bg-black border border-white/10 p-2 text-[10px] text-white" 
+                             placeholder="Step Label (e.g. Wireframe)"
+                             value={step.label}
+                             onChange={e => {
+                               const bs = [...editingProject.blocks]; bs[idx].data[sIdx].label = e.target.value; setEditingProject({...editingProject, blocks: bs});
+                             }} 
+                           />
                          </div>
-                         <div className="md:col-span-2 flex flex-col justify-between">
-                            <input className="w-full bg-black border border-white/10 p-2 text-xs" value={item.label} placeholder="e.g. Character Sculpting" onChange={e => {
-                               const bs = [...editingProject.blocks]; bs[idx].data[pidx].label = e.target.value;
-                               setEditingProject({...editingProject, blocks: bs});
-                            }} />
-                            <button onClick={() => {
-                               const bs = [...editingProject.blocks]; bs[idx].data.splice(pidx, 1);
-                               setEditingProject({...editingProject, blocks: bs});
-                            }} className="self-end text-red-500/50 hover:text-red-500 text-[10px] font-bold uppercase mt-2">Delete Milestone</button>
-                         </div>
-                      </div>
-                    ))}
+                       ))}
+                    </div>
                   </div>
                 )}
-                
+
               </div>
             ))}
           </div>
@@ -400,30 +388,39 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
         <h1 className="text-3xl font-bold uppercase tracking-tighter">Admin Portal</h1>
         <div className="flex gap-2 bg-white/5 p-1 rounded-sm">
           <button onClick={() => setActiveTab('projects')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${activeTab === 'projects' ? 'bg-purple-600' : ''}`}>Works</button>
-          <button onClick={() => setActiveTab('profile')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${activeTab === 'profile' ? 'bg-purple-600' : ''}`}>Profile & Bio</button>
+          <button onClick={() => setActiveTab('profile')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${activeTab === 'profile' ? 'bg-purple-600' : ''}`}>Profile</button>
+          <button onClick={() => setActiveTab('database')} className={`px-6 py-2 text-[10px] font-bold tracking-widest uppercase transition-all ${activeTab === 'database' ? 'bg-purple-600' : ''}`}>Database</button>
         </div>
       </div>
+
+      {activeTab === 'database' && (
+        <section className="bg-[#1A1A1A] p-10 border border-purple-500/30 rounded-sm">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-6 pb-2 border-b border-white/5">Firebase Firestore Connector</h2>
+          <p className="text-[10px] text-white/40 mb-8 leading-relaxed">
+            무료 데이터베이스(Firebase)를 연결하여 모든 방문자에게 실시간으로 업데이트된 내용을 보여줄 수 있습니다.<br/>
+            Firebase 콘솔 > 프로젝트 설정 > <strong>firebaseConfig</strong> 객체 JSON을 아래에 붙여넣으세요.
+          </p>
+          <textarea 
+            className="w-full bg-black border border-white/10 p-6 text-xs font-mono text-purple-300 outline-none h-64 focus:border-purple-500"
+            value={fbInput}
+            onChange={(e) => setFbInput(e.target.value)}
+            placeholder='{ "apiKey": "...", "authDomain": "...", ... }'
+          />
+          <div className="mt-8 flex justify-end">
+            <button onClick={handleUpdateFirebase} className="bg-purple-600 text-white px-10 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all shadow-xl">Connect & Sync Database</button>
+          </div>
+        </section>
+      )}
 
       {activeTab === 'projects' && (
         <div className="space-y-6">
           <div className="flex justify-end mb-10">
-            <button onClick={() => setEditingProject({ id: Date.now().toString(), title: '', slug: '', category: 'Surreal', shortDesc: '', duration: '', role: '', tools: [], year: '2025', thumbnailUrl: '', blocks: [] })} className="bg-white text-black px-8 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all">Create New Project</button>
+            <button onClick={() => setEditingProject({ id: Date.now().toString(), title: '', slug: '', category: 'Surreal', shortDesc: '', duration: '', role: '', tools: [], year: '2025', thumbnailUrl: '', blocks: [] })} className="bg-white text-black px-8 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all">Create New Project</button>
           </div>
           <div className="grid grid-cols-1 gap-4">
             {projects.map((p, index) => (
               <div key={p.id} className="bg-[#1A1A1A] p-6 flex justify-between items-center border border-white/10 group hover:border-purple-500/50 transition-all">
                 <div className="flex items-center gap-6">
-                   <div className="flex flex-col gap-1 mr-4 border-r border-white/5 pr-4">
-                     <button disabled={index === 0} onClick={() => {
-                       const newP = [...projects]; [newP[index], newP[index-1]] = [newP[index-1], newP[index]]; setProjects(newP);
-                     }} className="p-1 hover:text-purple-400 disabled:opacity-20 transition-colors">↑</button>
-                     <button disabled={index === projects.length - 1} onClick={() => {
-                       const newP = [...projects]; [newP[index], newP[index+1]] = [newP[index+1], newP[index]]; setProjects(newP);
-                     }} className="p-1 hover:text-purple-400 disabled:opacity-20 transition-colors">↓</button>
-                   </div>
-                   <div className="w-20 aspect-video bg-black overflow-hidden border border-white/5">
-                     {isVideo(p.thumbnailUrl) ? <video src={p.thumbnailUrl} className="w-full h-full object-cover opacity-50" /> : <img src={p.thumbnailUrl} className="w-full h-full object-cover opacity-50" />}
-                   </div>
                    <h3 className="text-xl font-bold font-serif">{p.title || 'Untitled'}</h3>
                 </div>
                 <div className="flex gap-6">
@@ -438,232 +435,140 @@ const Admin: React.FC<AdminProps> = ({ projects, setProjects, profile, setProfil
 
       {activeTab === 'profile' && (
         <div className="space-y-12 animate-in fade-in duration-700">
-          {/* Home Page Info Settings Section */}
-          <section className="bg-[#1A1A1A] p-10 border border-purple-500/30 rounded-sm shadow-[0_0_30px_rgba(147,51,234,0.05)]">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Home Page Content (Separate from Profile)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-              <div className="space-y-6">
-                <div>
-                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block tracking-widest">Home Alias Title (e.g. HAEMONGA)</label>
-                  <input 
-                    className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500 font-bold uppercase tracking-[0.2em] font-sans text-sm" 
-                    value={profile.homeTitle || ''} 
-                    placeholder="HAEMONGA"
-                    onChange={e => setProfile({...profile, homeTitle: e.target.value})} 
-                  />
-                  <p className="text-[9px] text-white/20 mt-2 italic font-sans">Landing page main title. Independent from general profile alias.</p>
-                </div>
-                <div>
-                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block tracking-widest">Home Name/Subtitle (e.g. Jeon Haemi)</label>
-                  <input 
-                    className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500 font-medium font-sans text-sm" 
-                    value={profile.homeSubtitle || ''} 
-                    placeholder="Jeon Haemi"
-                    onChange={e => setProfile({...profile, homeSubtitle: e.target.value})} 
-                  />
-                  <p className="text-[9px] text-white/20 mt-2 italic font-sans">Landing page subtitle. Keep in English for style as requested.</p>
-                </div>
-              </div>
-              <div className="flex flex-col gap-4">
-                <label className="text-[9px] text-white/30 uppercase font-bold tracking-widest block">Home Title Toggle</label>
-                <button 
-                  onClick={() => setProfile({...profile, showHomeTitle: !profile.showHomeTitle})}
-                  className={`w-full py-3 text-[10px] font-bold uppercase tracking-widest rounded-sm border transition-all ${
-                    profile.showHomeTitle !== false 
-                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg' 
-                    : 'bg-white/5 border-white/10 text-white/30'
-                  }`}
-                >
-                  {profile.showHomeTitle !== false ? 'TITLE IS VISIBLE' : 'TITLE IS HIDDEN'}
-                </button>
-              </div>
-            </div>
-          </section>
-
           <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Personal Identity</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <div>
-                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Real Name</label>
-                  <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} />
-                </div>
-                <div>
-                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Artist Name (Alias)</label>
-                  <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.alias} onChange={e => setProfile({...profile, alias: e.target.value})} />
-                </div>
-                <div>
-                  <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Professional Role</label>
-                  <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.role} onChange={e => setProfile({...profile, role: e.target.value})} />
-                </div>
-              </div>
-              <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Biography</label>
-                <textarea className="w-full bg-black border border-white/10 p-3 text-white outline-none h-[216px]" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
-              </div>
-            </div>
-          </section>
-
-          {/* Strength Management Section */}
-          <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Core Strengths</h2>
-            <div className="space-y-4">
-              {profile.strengths?.map((str, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <input 
-                    className="flex-grow bg-black border border-white/10 p-3 text-white text-xs outline-none focus:border-purple-500" 
-                    value={str} 
-                    placeholder={`Strength point #${idx + 1}`}
-                    onChange={e => {
-                      const newList = [...profile.strengths];
-                      newList[idx] = e.target.value;
-                      setProfile({ ...profile, strengths: newList });
-                    }} 
-                  />
-                  <button 
-                    onClick={() => {
-                      const newList = [...profile.strengths];
-                      newList.splice(idx, 1);
-                      setProfile({ ...profile, strengths: newList });
-                    }} 
-                    className="text-red-500/50 hover:text-red-500 font-bold uppercase text-[9px] tracking-widest px-2"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button 
-                onClick={() => setProfile({ ...profile, strengths: [...(profile.strengths || []), ''] })} 
-                className="text-[9px] font-bold text-purple-400 uppercase tracking-[0.3em] mt-4 hover:text-white transition-colors"
-              >
-                + ADD STRENGTH POINT
-              </button>
-              {(!profile.strengths || profile.strengths.length === 0) && (
-                <p className="text-[10px] text-white/20 italic font-sans mt-2 tracking-widest">Section is currently hidden (No data)</p>
-              )}
-            </div>
-          </section>
-
-          <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Contact Channels</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Contact Email</label>
-                <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500 text-xs" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
-              </div>
-              <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Behance URL</label>
-                <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500 text-xs" value={profile.behance} onChange={e => setProfile({...profile, behance: e.target.value})} />
-              </div>
-              <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Notefolio URL</label>
-                <input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500 text-xs" value={profile.notefolio} onChange={e => setProfile({...profile, notefolio: e.target.value})} />
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Expertise (Comma separated)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">3D & Simulation Stack</label>
-                <textarea className="w-full bg-black border border-white/10 p-3 text-white outline-none text-xs" value={profile.skills.threeD.join(', ')} onChange={e => setProfile({...profile, skills: {...profile.skills, threeD: e.target.value.split(',').map(s => s.trim())}})} />
-              </div>
-              <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">2D & Post Stack</label>
-                <textarea className="w-full bg-black border border-white/10 p-3 text-white outline-none text-xs" value={profile.skills.twoD.join(', ')} onChange={e => setProfile({...profile, skills: {...profile.skills, twoD: e.target.value.split(',').map(s => s.trim())}})} />
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Timeline (Experience & Education)</h2>
-            <div className="space-y-10">
-              <div>
-                <h3 className="text-[10px] text-white/30 uppercase font-bold tracking-widest mb-4">Milestones & Exhibitions</h3>
-                {profile.experience.map((exp, idx) => (
-                  <div key={idx} className="flex gap-4 mb-3">
-                    <input className="w-20 bg-black border border-white/10 p-2 text-xs" value={exp.year} placeholder="Year" onChange={e => {
-                      const exps = [...profile.experience]; exps[idx].year = e.target.value; setProfile({...profile, experience: exps});
-                    }} />
-                    <input className="flex-grow bg-black border border-white/10 p-2 text-xs" value={exp.title} placeholder="Title" onChange={e => {
-                      const exps = [...profile.experience]; exps[idx].title = e.target.value; setProfile({...profile, experience: exps});
-                    }} />
-                    <button onClick={() => {
-                      const exps = [...profile.experience]; exps.splice(idx, 1); setProfile({...profile, experience: exps});
-                    }} className="text-red-500/50 hover:text-red-500 px-2 font-bold uppercase text-[9px]">Remove</button>
-                  </div>
-                ))}
-                <button onClick={() => setProfile({...profile, experience: [...profile.experience, {year: '', title: ''}]})} className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mt-2 hover:text-white transition-colors">+ Add Milestone</button>
-              </div>
-
-              <div>
-                <h3 className="text-[10px] text-white/30 uppercase font-bold tracking-widest mb-4">Education</h3>
-                {profile.education?.map((edu, idx) => (
-                  <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3 bg-black/20 p-4 border border-white/5">
-                    <input className="bg-black border border-white/10 p-2 text-xs" value={edu.period} placeholder="Period" onChange={e => {
-                      const edus = [...profile.education]; edus[idx].period = e.target.value; setProfile({...profile, education: edus});
-                    }} />
-                    <input className="bg-black border border-white/10 p-2 text-xs" value={edu.school} placeholder="Institution" onChange={e => {
-                      const edus = [...profile.education]; edus[idx].school = e.target.value; setProfile({...profile, education: edus});
-                    }} />
-                    <div className="flex gap-2">
-                      <input className="flex-grow bg-black border border-white/10 p-2 text-xs" value={edu.major} placeholder="Major" onChange={e => {
-                        const edus = [...profile.education]; edus[idx].major = e.target.value; setProfile({...profile, education: edus});
-                      }} />
-                      <button onClick={() => {
-                        const edus = [...profile.education]; edus.splice(idx, 1); setProfile({...profile, education: edus});
-                      }} className="text-red-500/50 hover:text-red-500 px-2 font-bold uppercase text-[9px]">Remove</button>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Personal Identity & Media</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+               <div className="space-y-8">
+                  <div>
+                    <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Hero Image (Background)</label>
+                    <div className="aspect-video bg-black border border-white/10 relative overflow-hidden group">
+                      {profile.heroImageUrl ? <img src={profile.heroImageUrl} className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full text-white/20 text-[10px]">Empty</div>}
+                      <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer text-[10px] font-bold transition-opacity">
+                        CHANGE HERO
+                        <input type="file" className="hidden" accept="image/*" onChange={e => handleProfileImageUpload(e, 'heroImageUrl')} />
+                      </label>
                     </div>
                   </div>
-                ))}
-                <button onClick={() => setProfile({...profile, education: [...profile.education, {period: '', school: '', major: ''}]})} className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mt-2 hover:text-white transition-colors">+ Add Education</button>
+                  <div>
+                    <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Profile Image</label>
+                    <div className="aspect-[4/5] w-48 bg-black border border-white/10 relative overflow-hidden group">
+                      {profile.profileImageUrl ? <img src={profile.profileImageUrl} className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full text-white/20 text-[10px]">Empty</div>}
+                      <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer text-[10px] font-bold transition-opacity">
+                        CHANGE PHOTO
+                        <input type="file" className="hidden" accept="image/*" onChange={e => handleProfileImageUpload(e, 'profileImageUrl')} />
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Resume PDF (Base64)</label>
+                    <input type="file" accept="application/pdf" className="text-[10px] text-white/40 block w-full" onChange={e => handleProfileImageUpload(e, 'resumeUrl')} />
+                    <p className="text-[9px] text-purple-400/50 mt-1 italic">Current: {profile.resumeUrl ? 'Uploaded' : 'None'}</p>
+                  </div>
+               </div>
+
+               <div className="space-y-6">
+                 <div className="grid grid-cols-2 gap-4">
+                   <div><label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Real Name</label><input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} /></div>
+                   <div><label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Artist Name</label><input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.alias} onChange={e => setProfile({...profile, alias: e.target.value})} /></div>
+                 </div>
+                 
+                 <div className="space-y-4 pt-4 border-t border-white/5">
+                   <div className="flex items-center gap-2">
+                     <input type="checkbox" id="showHomeTitle" checked={profile.showHomeTitle} onChange={e => setProfile({...profile, showHomeTitle: e.target.checked})} />
+                     <label htmlFor="showHomeTitle" className="text-[9px] text-white/30 uppercase font-bold">Show Hero Text Overlay</label>
+                   </div>
+                   <div><label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Hero Title (e.g. HAEMONGA)</label><input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.homeTitle || ''} onChange={e => setProfile({...profile, homeTitle: e.target.value})} /></div>
+                   <div><label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Hero Subtitle (e.g. Jeon Haemi)</label><input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.homeSubtitle || ''} onChange={e => setProfile({...profile, homeSubtitle: e.target.value})} /></div>
+                 </div>
+
+                 <div><label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Job Title / Role</label><input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.role} onChange={e => setProfile({...profile, role: e.target.value})} /></div>
+                 <div><label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Email</label><input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} /></div>
+                 <div className="grid grid-cols-2 gap-4">
+                   <div><label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Behance URL</label><input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.behance} onChange={e => setProfile({...profile, behance: e.target.value})} /></div>
+                   <div><label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Notefolio URL</label><input className="w-full bg-black border border-white/10 p-3 text-white outline-none focus:border-purple-500" value={profile.notefolio} onChange={e => setProfile({...profile, notefolio: e.target.value})} /></div>
+                 </div>
+               </div>
+            </div>
+
+            <div className="mb-12">
+               <label className="text-[9px] text-white/30 uppercase font-bold mb-2 block">Biography</label>
+               <textarea className="w-full bg-black border border-white/10 p-4 text-white outline-none h-48 leading-relaxed font-light" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+            </div>
+
+            <div className="border-t border-white/5 pt-12">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8">Professional Details</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
+                {renderArrayField('Education History', profile.education || [], 
+                  () => setProfile({...profile, education: [...(profile.education || []), {period: '', school: '', major: ''}]}),
+                  (idx) => setProfile({...profile, education: profile.education.filter((_, i) => i !== idx)}),
+                  (item, idx) => (
+                    <div className="space-y-2 bg-white/5 p-4 rounded-sm">
+                      <input className="w-full bg-transparent border-b border-white/10 p-1 text-[10px]" placeholder="Period" value={item.period} onChange={e => {
+                        const next = [...profile.education]; next[idx].period = e.target.value; setProfile({...profile, education: next});
+                      }} />
+                      <input className="w-full bg-transparent border-b border-white/10 p-1 text-[10px]" placeholder="School Name" value={item.school} onChange={e => {
+                        const next = [...profile.education]; next[idx].school = e.target.value; setProfile({...profile, education: next});
+                      }} />
+                      <input className="w-full bg-transparent border-b border-white/10 p-1 text-[10px]" placeholder="Major" value={item.major} onChange={e => {
+                        const next = [...profile.education]; next[idx].major = e.target.value; setProfile({...profile, education: next});
+                      }} />
+                    </div>
+                  )
+                )}
+
+                {renderArrayField('Experience & Awards', profile.experience || [], 
+                  () => setProfile({...profile, experience: [...(profile.experience || []), {year: '', title: ''}]}),
+                  (idx) => setProfile({...profile, experience: profile.experience.filter((_, i) => i !== idx)}),
+                  (item, idx) => (
+                    <div className="space-y-2 bg-white/5 p-4 rounded-sm">
+                      <input className="w-full bg-transparent border-b border-white/10 p-1 text-[10px]" placeholder="Year" value={item.year} onChange={e => {
+                        const next = [...profile.experience]; next[idx].year = e.target.value; setProfile({...profile, experience: next});
+                      }} />
+                      <input className="w-full bg-transparent border-b border-white/10 p-1 text-[10px]" placeholder="Title" value={item.title} onChange={e => {
+                        const next = [...profile.experience]; next[idx].title = e.target.value; setProfile({...profile, experience: next});
+                      }} />
+                    </div>
+                  )
+                )}
+
+                {renderArrayField('Skills: 3D', profile.skills.threeD || [], 
+                  () => setProfile({...profile, skills: {...profile.skills, threeD: [...profile.skills.threeD, '']}}),
+                  (idx) => setProfile({...profile, skills: {...profile.skills, threeD: profile.skills.threeD.filter((_, i) => i !== idx)}}),
+                  (item, idx) => (
+                    <input className="w-full bg-transparent border-b border-white/10 p-1 text-[10px]" placeholder="Skill" value={item} onChange={e => {
+                      const next = [...profile.skills.threeD]; next[idx] = e.target.value; setProfile({...profile, skills: {...profile.skills, threeD: next}});
+                    }} />
+                  )
+                )}
+
+                {renderArrayField('Skills: 2D', profile.skills.twoD || [], 
+                  () => setProfile({...profile, skills: {...profile.skills, twoD: [...profile.skills.twoD, '']}}),
+                  (idx) => setProfile({...profile, skills: {...profile.skills, twoD: profile.skills.twoD.filter((_, i) => i !== idx)}}),
+                  (item, idx) => (
+                    <input className="w-full bg-transparent border-b border-white/10 p-1 text-[10px]" placeholder="Skill" value={item} onChange={e => {
+                      const next = [...profile.skills.twoD]; next[idx] = e.target.value; setProfile({...profile, skills: {...profile.skills, twoD: next}});
+                    }} />
+                  )
+                )}
+
+                {renderArrayField('Key Strengths', profile.strengths || [], 
+                  () => setProfile({...profile, strengths: [...(profile.strengths || []), '']}),
+                  (idx) => setProfile({...profile, strengths: profile.strengths.filter((_, i) => i !== idx)}),
+                  (item, idx) => (
+                    <input className="w-full bg-transparent border-b border-white/10 p-1 text-[10px]" placeholder="Strength" value={item} onChange={e => {
+                      const next = [...profile.strengths]; next[idx] = e.target.value; setProfile({...profile, strengths: next});
+                    }} />
+                  )
+                )}
               </div>
+            </div>
+
+            <div className="mt-12 flex justify-center border-t border-white/5 pt-10">
+              <button onClick={() => alert('프로필 변경사항이 저장되었습니다.')} className="bg-purple-600 text-white px-12 py-5 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all shadow-xl">Save Complete Profile</button>
             </div>
           </section>
-
-          <section className="bg-[#1A1A1A] p-10 border border-white/10 rounded-sm">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-purple-400 mb-8 border-b border-white/5 pb-4">Imagery & Documents</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
-              <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Hero Backdrop (Landing)</label>
-                <div className="aspect-video bg-black relative group overflow-hidden border border-white/10">
-                  <img src={profile.heroImageUrl} className="w-full h-full object-cover opacity-60" />
-                  <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
-                    REPLACE HERO
-                    <input type="file" className="hidden" accept="image/*" onChange={e => handleProfileImageUpload(e, 'heroImageUrl')} />
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Artist Profile Picture</label>
-                <div className="aspect-[4/5] max-w-[240px] bg-black relative group overflow-hidden border border-white/10 mx-auto">
-                  <img src={profile.profileImageUrl} className="w-full h-full object-cover opacity-60" />
-                  <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer text-[10px] font-bold transition-opacity">
-                    REPLACE PHOTO
-                    <input type="file" className="hidden" accept="image/*" onChange={e => handleProfileImageUpload(e, 'profileImageUrl')} />
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-6 border-t border-white/5">
-              <label className="text-[9px] text-white/30 uppercase font-bold mb-4 block">Professional CV (PDF)</label>
-              <div className="flex items-center gap-6">
-                <div className="flex-grow p-4 bg-black/40 border border-dashed border-white/10 rounded-sm text-xs text-white/20 uppercase tracking-widest">
-                  {profile.resumeUrl ? '✓ PDF Linked' : 'No document attached'}
-                </div>
-                <label className="bg-white text-black px-6 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all cursor-pointer">
-                  UPLOAD PDF
-                  <input type="file" className="hidden" accept="application/pdf" onChange={e => handleProfileImageUpload(e, 'resumeUrl')} />
-                </label>
-              </div>
-            </div>
-          </section>
-
-          <div className="flex justify-center pb-20">
-             <button onClick={() => alert('Profile update complete. (Project data persistence will also sync profile data)')} className="bg-purple-600 text-white px-12 py-5 text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all shadow-xl">Apply Profile Changes</button>
-          </div>
         </div>
       )}
     </div>

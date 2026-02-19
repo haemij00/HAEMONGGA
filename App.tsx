@@ -4,17 +4,20 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminModal from './components/AdminModal';
 import { Project, Profile } from './types';
-import { INITIAL_PROJECTS, INITIAL_PROFILE } from './constants';
+import { INITIAL_PROJECTS, INITIAL_PROFILE, DEFAULT_FIREBASE_CONFIG } from './constants';
 
-// Pages/Sections
+// Page Imports
 import Home from './pages/Home';
-import Works from './pages/Works';
-import ProjectDetail from './pages/ProjectDetail';
 import About from './pages/About';
+import Works from './pages/Works';
 import Contact from './pages/Contact';
+import ProjectDetail from './pages/ProjectDetail';
 import Admin from './pages/Admin';
 
-// Simple IndexedDB Wrapper for high-capacity storage
+// Firebase Imports
+import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
 const DB_NAME = 'HaemonggaDB';
 const STORE_NAME = 'PortfolioStore';
 
@@ -64,6 +67,7 @@ const App: React.FC = () => {
   
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [profile, setProfile] = useState<Profile>(INITIAL_PROFILE);
+  const [firebaseConfig, setFirebaseConfig] = useState<any>(DEFAULT_FIREBASE_CONFIG);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = {
@@ -73,16 +77,50 @@ const App: React.FC = () => {
     contact: useRef<HTMLElement>(null),
   };
 
-  // Load data from IndexedDB on mount
+  // Sync Logic
+  const syncWithFirebase = async (config: any) => {
+    if (!config || !config.apiKey) return;
+    try {
+      const app = !getApps().length ? initializeApp(config) : getApp();
+      const db = getFirestore(app);
+      
+      const profileDoc = await getDoc(doc(db, "portfolio", "profile"));
+      if (profileDoc.exists()) {
+        const pData = profileDoc.data() as Profile;
+        setProfile(pData);
+        await setDBItem('profile', pData);
+      }
+
+      const projectsDoc = await getDoc(doc(db, "portfolio", "projects"));
+      if (projectsDoc.exists()) {
+        const data = projectsDoc.data();
+        if (data && data.list) {
+          setProjects(data.list);
+          await setDBItem('projects', data.list);
+        }
+      }
+      console.log("Firebase sync successful");
+    } catch (e) {
+      console.warn("Firebase sync failed, using local cache", e);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
+        const savedConfig = await getDBItem('firebaseConfig');
         const savedProjects = await getDBItem('projects');
         const savedProfile = await getDBItem('profile');
+        
+        const currentConfig = savedConfig || DEFAULT_FIREBASE_CONFIG;
+        setFirebaseConfig(currentConfig);
         if (savedProjects) setProjects(savedProjects);
         if (savedProfile) setProfile(savedProfile);
+
+        // Background cloud sync
+        await syncWithFirebase(currentConfig);
       } catch (e) {
-        console.error("Failed to load data from IndexedDB", e);
+        console.error("Data load failed", e);
       } finally {
         setIsHydrated(true);
       }
@@ -90,59 +128,51 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // Save data to IndexedDB whenever state changes
-  useEffect(() => {
-    if (!isHydrated) return;
-    setDBItem('projects', projects).catch(e => console.error("Save projects failed", e));
-  }, [projects, isHydrated]);
+  const handleSaveAll = async (newProjects: Project[], newProfile: Profile, newConfig?: any) => {
+    setProjects(newProjects);
+    setProfile(newProfile);
+    const configToUse = newConfig || firebaseConfig;
+    if (newConfig) setFirebaseConfig(newConfig);
 
-  useEffect(() => {
-    if (!isHydrated) return;
-    setDBItem('profile', profile).catch(e => console.error("Save profile failed", e));
-  }, [profile, isHydrated]);
+    // Save to Local
+    await setDBItem('projects', newProjects);
+    await setDBItem('profile', newProfile);
+    if (newConfig) await setDBItem('firebaseConfig', newConfig);
 
-  // Intersection Observer for Scroll Sync
+    // Push to Firebase
+    if (configToUse && configToUse.apiKey) {
+      try {
+        const app = !getApps().length ? initializeApp(configToUse) : getApp();
+        const db = getFirestore(app);
+        await setDoc(doc(db, "portfolio", "profile"), newProfile);
+        await setDoc(doc(db, "portfolio", "projects"), { list: newProjects });
+        console.log("Cloud save successful");
+      } catch (e) {
+        console.error("Cloud save failed", e);
+      }
+    }
+  };
+
   useEffect(() => {
     if (!isHydrated || activeView !== 'main') return;
-
-    const options = {
-      root: scrollContainerRef.current,
-      rootMargin: '-50% 0px -50% 0px',
-      threshold: 0
-    };
-
+    const options = { root: scrollContainerRef.current, rootMargin: '-50% 0px -50% 0px', threshold: 0 };
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setCurrentPage(entry.target.id);
-        }
-      });
+      entries.forEach((entry) => { if (entry.isIntersecting) setCurrentPage(entry.target.id); });
     }, options);
-
-    Object.values(sectionRefs).forEach((ref) => {
-      if (ref.current) observer.observe(ref.current);
-    });
-
+    Object.values(sectionRefs).forEach((ref) => { if (ref.current) observer.observe(ref.current); });
     return () => observer.disconnect();
   }, [activeView, isHydrated, projects]);
 
   const handlePageChange = (pageId: string) => {
     if (pageId === 'admin') {
-      if (isAdminLoggedIn) {
-        setActiveView('admin');
-        window.scrollTo(0, 0);
-      } else {
-        setIsAdminModalOpen(true);
-      }
+      if (isAdminLoggedIn) { setActiveView('admin'); window.scrollTo(0, 0); }
+      else { setIsAdminModalOpen(true); }
       return;
     }
-
     if (activeView !== 'main') {
       setActiveView('main');
       setCurrentPage(pageId);
-      setTimeout(() => {
-        sectionRefs[pageId as keyof typeof sectionRefs]?.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
+      setTimeout(() => { sectionRefs[pageId as keyof typeof sectionRefs]?.current?.scrollIntoView({ behavior: 'smooth' }); }, 50);
     } else {
       sectionRefs[pageId as keyof typeof sectionRefs]?.current?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -157,18 +187,14 @@ const App: React.FC = () => {
   const handleBackToGallery = () => {
     setActiveView('main');
     setCurrentPage('works');
-    setTimeout(() => {
-      if (sectionRefs.works.current) {
-        sectionRefs.works.current.scrollIntoView({ behavior: 'auto', block: 'start' });
-      }
-    }, 30);
+    setTimeout(() => { if (sectionRefs.works.current) sectionRefs.works.current.scrollIntoView({ behavior: 'auto', block: 'start' }); }, 30);
   };
 
   if (!isHydrated) {
     return (
       <div className="h-screen w-full bg-[#0E0E0E] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 border-t-2 border-purple-500 rounded-full animate-spin" />
-        <span className="text-[10px] tracking-[0.5em] text-white/30 uppercase font-bold">Initializing Gallery...</span>
+        <span className="text-[10px] tracking-[0.5em] text-white/30 uppercase font-bold">Synchronizing...</span>
       </div>
     );
   }
@@ -178,33 +204,36 @@ const App: React.FC = () => {
       const project = projects.find(p => p.slug === selectedProjectSlug);
       if (project) return (
         <div key={`project-${selectedProjectSlug}`} className="bg-[#0E0E0E] h-full overflow-y-auto">
-          <ProjectDetail 
-            project={project} 
-            allProjects={projects}
-            onProjectSelect={handleNavigateToProject}
-            onBack={handleBackToGallery} 
-          />
+          <ProjectDetail project={project} allProjects={projects} onProjectSelect={handleNavigateToProject} onBack={handleBackToGallery} />
           <Footer profile={profile} />
         </div>
       );
     }
-
     if (activeView === 'admin') {
       return (
         <div key="admin-view" className="bg-[#0E0E0E] h-full overflow-y-auto pt-20">
-          <Admin projects={projects} setProjects={setProjects} profile={profile} setProfile={setProfile} />
+          <Admin 
+            projects={projects} 
+            setProjects={(val) => {
+              const newList = typeof val === 'function' ? (val as any)(projects) : val;
+              handleSaveAll(newList, profile);
+            }} 
+            profile={profile} 
+            setProfile={(val) => {
+              const newProfile = typeof val === 'function' ? (val as any)(profile) : val;
+              handleSaveAll(projects, newProfile);
+            }} 
+            firebaseConfig={firebaseConfig}
+            setFirebaseConfig={(config) => handleSaveAll(projects, profile, config)}
+          />
           <Footer profile={profile} />
         </div>
       );
     }
-
     return (
       <div className="snap-container h-full" ref={scrollContainerRef}>
         <section id="home" ref={sectionRefs.home} className="snap-section">
-          <Home 
-            profile={profile}
-            onNavigateToWorks={() => handlePageChange('works')} 
-          />
+          <Home profile={profile} onNavigateToWorks={() => handlePageChange('works')} />
         </section>
         <section id="about" ref={sectionRefs.about} className="snap-section border-t border-white/5 bg-[#0A0A0A]">
           <About profile={profile} />
@@ -222,24 +251,9 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col selection:bg-purple-500/30 selection:text-white bg-[#0E0E0E] overflow-hidden">
-      <Navbar 
-        currentPage={activeView === 'main' ? currentPage : activeView} 
-        onPageChange={handlePageChange} 
-        onOpenAdmin={() => isAdminLoggedIn ? setActiveView('admin') : setIsAdminModalOpen(true)}
-      />
-      
-      <main className="flex-grow overflow-hidden">
-        {renderContent()}
-      </main>
-
-      <AdminModal 
-        isOpen={isAdminModalOpen} 
-        onClose={() => setIsAdminModalOpen(false)} 
-        onSuccess={() => {
-          setIsAdminLoggedIn(true);
-          setActiveView('admin');
-        }} 
-      />
+      <Navbar currentPage={activeView === 'main' ? currentPage : activeView} onPageChange={handlePageChange} onOpenAdmin={() => isAdminLoggedIn ? setActiveView('admin') : setIsAdminModalOpen(true)} />
+      <main className="flex-grow overflow-hidden">{renderContent()}</main>
+      <AdminModal isOpen={isAdminModalOpen} onClose={() => setIsAdminModalOpen(false)} onSuccess={() => { setIsAdminLoggedIn(true); setActiveView('admin'); }} />
     </div>
   );
 };
