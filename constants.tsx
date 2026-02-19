@@ -2,7 +2,7 @@
 import { Project, Profile } from './types';
 
 export const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAqHOx1QSbBxIF9B-UaV2vSlKPzCZehNSI",
+  apiKey: import.meta.env.VITE_MAPS_API_KEY,
   authDomain: "haemonga.firebaseapp.com",
   projectId: "haemonga",
   storageBucket: "haemonga.firebasestorage.app",
