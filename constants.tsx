@@ -1,16 +1,6 @@
 
 import { Project, Profile } from './types';
 
-export const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: import.meta.env.VITE_MAPS_API_KEY,
-  authDomain: "haemonga.firebaseapp.com",
-  projectId: "haemonga",
-  storageBucket: "haemonga.firebasestorage.app",
-  messagingSenderId: "469503456003",
-  appId: "1:469503456003:web:3b6d064dd4a6ed4a55af36",
-  measurementId: "G-03JPK5M8XC"
-};
-
 export const INITIAL_PROJECTS: Project[] = [
   {
     id: '1',
